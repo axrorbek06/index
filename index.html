@@ -12,8 +12,6 @@
             --secondary: #6c757d;
             --success: #28a745;
             --danger: #dc3545;
-            --warning: #ffc107;
-            --info: #17a2b8;
             --light: #f8f9fa;
             --dark: #343a40;
         }
@@ -48,33 +46,16 @@
             border-radius: 0 0 20px 20px;
             margin-bottom: 25px;
             box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .header::before {
-            content: '';
-            position: absolute;
-            top: -10px;
-            left: -10px;
-            right: -10px;
-            height: 50px;
-            background: rgba(255, 255, 255, 0.1);
-            transform: rotate(-5deg);
         }
         
         .header h1 {
             font-size: 24px;
             margin-bottom: 5px;
-            position: relative;
-            z-index: 1;
         }
         
         .header p {
             opacity: 0.9;
             font-size: 14px;
-            position: relative;
-            z-index: 1;
         }
         
         .card {
@@ -83,12 +64,6 @@
             border-radius: 16px;
             margin-bottom: 20px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
         }
         
         .balance-card {
@@ -107,20 +82,6 @@
             font-size: 32px;
             font-weight: bold;
             margin: 10px 0;
-        }
-        
-        .balance-change {
-            font-size: 14px;
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 10px;
-        }
-        
-        .change-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
         }
         
         .stats-cards {
@@ -200,13 +161,12 @@
             border: 1px solid #ddd;
             border-radius: 10px;
             font-size: 16px;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            transition: border-color 0.3s ease;
         }
         
         .form-input:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(0, 136, 204, 0.2);
         }
         
         .form-select {
@@ -216,11 +176,6 @@
             border-radius: 10px;
             background-color: white;
             font-size: 16px;
-            appearance: none;
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 10px center;
-            background-size: 16px;
         }
         
         .btn {
@@ -233,25 +188,21 @@
             font-weight: 600;
             cursor: pointer;
             text-align: center;
-            transition: background 0.3s ease, transform 0.2s ease;
-        }
-        
-        .btn:active {
-            transform: scale(0.98);
+            transition: background 0.3s ease;
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, var(--primary), #0066a0);
+            background-color: var(--primary);
             color: white;
         }
         
         .btn-success {
-            background: linear-gradient(135deg, var(--success), #1e7e34);
+            background-color: var(--success);
             color: white;
         }
         
         .btn-danger {
-            background: linear-gradient(135deg, var(--danger), #bd2130);
+            background-color: var(--danger);
             color: white;
         }
         
@@ -263,9 +214,6 @@
             font-size: 18px;
             margin-bottom: 15px;
             color: var(--dark);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
         }
         
         .filter-buttons {
@@ -298,15 +246,10 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: background 0.3s ease;
         }
         
         .expense-item:last-child {
             border-bottom: none;
-        }
-        
-        .expense-item:hover {
-            background: #f9f9f9;
         }
         
         .expense-info {
@@ -367,8 +310,6 @@
             transform: translateX(100%);
             transition: transform 0.3s ease;
             z-index: 1000;
-            display: flex;
-            align-items: center;
         }
         
         .notification.show {
@@ -434,27 +375,17 @@
         <div id="main-tab" class="tab-content active">
             <div class="balance-card card">
                 <div class="balance-label">Joriy balans</div>
-                <div class="balance-amount">1,250,000 so'm</div>
-                <div class="balance-change">
-                    <div class="change-item">
-                        <span>Kirim</span>
-                        <span style="color: #28a745;">+2,500,000 so'm</span>
-                    </div>
-                    <div class="change-item">
-                        <span>Chiqim</span>
-                        <span style="color: #dc3545;">-1,250,000 so'm</span>
-                    </div>
-                </div>
+                <div class="balance-amount" id="current-balance">0 so'm</div>
             </div>
             
             <div class="stats-cards">
                 <div class="stat-card card">
                     <div class="stat-label">Bugungi chiqim</div>
-                    <div class="stat-value expense">75,000 so'm</div>
+                    <div class="stat-value expense" id="today-expense">0 so'm</div>
                 </div>
                 <div class="stat-card card">
                     <div class="stat-label">Oylik chiqim</div>
-                    <div class="stat-value expense">1,250,000 so'm</div>
+                    <div class="stat-value expense" id="monthly-expense">0 so'm</div>
                 </div>
             </div>
             
@@ -480,39 +411,8 @@
                     <div class="filter-btn" data-filter="month">Oxirgi oy</div>
                 </div>
                 
-                <div id="expenses-list">
-                    <div class="expense-item">
-                        <div class="expense-info">
-                            <div class="expense-title">Oziq-ovqat</div>
-                            <div class="expense-details">
-                                <span>12.06.2023</span>
-                                <span class="expense-category">Oziq-ovqat</span>
-                            </div>
-                        </div>
-                        <div class="expense-amount expense-outcome">-75,000 so'm</div>
-                    </div>
-                    
-                    <div class="expense-item">
-                        <div class="expense-info">
-                            <div class="expense-title">Kvartira</div>
-                            <div class="expense-details">
-                                <span>10.06.2023</span>
-                                <span class="expense-category">Kvartira</span>
-                            </div>
-                        </div>
-                        <div class="expense-amount expense-outcome">-500,000 so'm</div>
-                    </div>
-                    
-                    <div class="expense-item">
-                        <div class="expense-info">
-                            <div class="expense-title">Maosh</div>
-                            <div class="expense-details">
-                                <span>05.06.2023</span>
-                                <span class="expense-category">Kirim</span>
-                            </div>
-                        </div>
-                        <div class="expense-amount expense-income">+2,500,000 so'm</div>
-                    </div>
+                <div id="expenses-list" class="loading">
+                    Ma'lumotlar yuklanmoqda...
                 </div>
             </div>
         </div>
@@ -570,6 +470,10 @@
         const notification = document.getElementById('notification');
         const notificationMessage = document.getElementById('notification-message');
         
+        // Ma'lumotlarni saqlash (keyinroq Google Sheets bilan almashtiriladi)
+        let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+        let balance = parseInt(localStorage.getItem('balance')) || 0;
+        
         // Tablarni boshqarish
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
@@ -581,6 +485,11 @@
                 
                 tab.classList.add('active');
                 document.getElementById(`${tabId}-tab`).classList.add('active');
+                
+                // Agar tarix sahifasiga o'tilsa, ma'lumotlarni yangila
+                if (tabId === 'history') {
+                    loadExpenses();
+                }
             });
         });
         
@@ -590,8 +499,8 @@
                 filterButtons.forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
                 
-                // Bu yerda filtrlash logikasi qo'shiladi
-                showNotification('Filter qo\'llandi: ' + button.getAttribute('data-filter'));
+                // Filtrlash
+                loadExpenses();
             });
         });
         
@@ -610,18 +519,46 @@
         function initChart() {
             const ctx = document.getElementById('chart').getContext('2d');
             
-            // Namuna ma'lumotlari
-            const data = {
-                labels: ['Oziq-ovqat', 'Kvartira', 'Transport', 'Kiyim', 'Boshqa'],
+            // Kategoriyalar bo'yicha chiqimlarni hisoblash
+            const categories = {
+                'uy': 0,
+                'kv': 0,
+                'ov': 0,
+                'ozm': 0,
+                'boshqa': 0
+            };
+            
+            transactions.filter(t => t.type === 'chiqim').forEach(transaction => {
+                if (categories.hasOwnProperty(transaction.category)) {
+                    categories[transaction.category] += parseInt(transaction.amount);
+                }
+            });
+            
+            // Faqat 0 dan katta bo'lgan kategoriyalarni ko'rsatish
+            const labels = [];
+            const data = [];
+            const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'];
+            
+            Object.entries(categories).forEach(([key, value], index) => {
+                if (value > 0) {
+                    let label = '';
+                    switch(key) {
+                        case 'uy': label = 'UY'; break;
+                        case 'kv': label = 'Kvartira'; break;
+                        case 'ov': label = 'Oziq-ovqat'; break;
+                        case 'ozm': label = 'Ozm'; break;
+                        case 'boshqa': label = 'Boshqa'; break;
+                    }
+                    labels.push(label);
+                    data.push(value);
+                }
+            });
+            
+            const chartData = {
+                labels: labels,
                 datasets: [{
-                    data: [35, 25, 15, 10, 15],
-                    backgroundColor: [
-                        '#FF6384',
-                        '#36A2EB',
-                        '#FFCE56',
-                        '#4BC0C0',
-                        '#9966FF'
-                    ],
+                    data: data,
+                    backgroundColor: colors.slice(0, labels.length),
                     borderWidth: 0
                 }]
             };
@@ -642,18 +579,108 @@
                     tooltip: {
                         callbacks: {
                             label: function(context) {
-                                return context.label + ': ' + context.raw + '%';
+                                return context.label + ': ' + context.raw.toLocaleString() + ' so\'m';
                             }
                         }
                     }
                 }
             };
             
-            new Chart(ctx, {
+            // Avvalgi chartni yo'q qilish
+            if (window.budgetChart) {
+                window.budgetChart.destroy();
+            }
+            
+            // Yangi chart yaratish
+            window.budgetChart = new Chart(ctx, {
                 type: 'doughnut',
-                data: data,
+                data: chartData,
                 options: options
             });
+        }
+        
+        // Balans va statistikani yangilash
+        function updateBalanceAndStats() {
+            // Joriy balans
+            document.getElementById('current-balance').textContent = balance.toLocaleString() + ' so\'m';
+            
+            // Bugungi va oylik chiqimlar
+            const today = new Date().toDateString();
+            const thisMonth = new Date().getMonth();
+            
+            const todayExpense = transactions
+                .filter(t => t.type === 'chiqim' && new Date(t.date).toDateString() === today)
+                .reduce((total, t) => total + parseInt(t.amount), 0);
+                
+            const monthlyExpense = transactions
+                .filter(t => t.type === 'chiqim' && new Date(t.date).getMonth() === thisMonth)
+                .reduce((total, t) => total + parseInt(t.amount), 0);
+                
+            document.getElementById('today-expense').textContent = todayExpense.toLocaleString() + ' so\'m';
+            document.getElementById('monthly-expense').textContent = monthlyExpense.toLocaleString() + ' so\'m';
+            
+            // Chartni yangilash
+            initChart();
+            
+            // Ma'lumotlarni saqlash
+            localStorage.setItem('transactions', JSON.stringify(transactions));
+            localStorage.setItem('balance', balance);
+        }
+        
+        // Chiqimlarni yuklash va ko'rsatish
+        function loadExpenses() {
+            const expensesList = document.getElementById('expenses-list');
+            const filter = document.querySelector('.filter-btn.active').getAttribute('data-filter');
+            
+            // Filtrlash
+            let filteredTransactions = [...transactions].reverse(); // Eng yangisi birinchi
+            
+            if (filter === 'week') {
+                const oneWeekAgo = new Date();
+                oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+                filteredTransactions = filteredTransactions.filter(t => new Date(t.date) >= oneWeekAgo);
+            } else if (filter === 'month') {
+                const oneMonthAgo = new Date();
+                oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+                filteredTransactions = filteredTransactions.filter(t => new Date(t.date) >= oneMonthAgo);
+            }
+            
+            if (filteredTransactions.length === 0) {
+                expensesList.innerHTML = '<div class="loading">Hech qanday operatsiya topilmadi</div>';
+                return;
+            }
+            
+            let html = '';
+            filteredTransactions.forEach(transaction => {
+                const amountClass = transaction.type === 'kirim' ? 'expense-income' : 'expense-outcome';
+                const amountSign = transaction.type === 'kirim' ? '+' : '-';
+                
+                let categoryText = '';
+                switch(transaction.category) {
+                    case 'uy': categoryText = 'UY'; break;
+                    case 'kv': categoryText = 'Kvartira'; break;
+                    case 'ov': categoryText = 'Oziq-ovqat'; break;
+                    case 'ozm': categoryText = 'Ozm'; break;
+                    case 'boshqa': categoryText = 'Boshqa'; break;
+                }
+                
+                html += `
+                    <div class="expense-item">
+                        <div class="expense-info">
+                            <div class="expense-title">${transaction.reason}</div>
+                            <div class="expense-details">
+                                <span>${new Date(transaction.date).toLocaleDateString()}</span>
+                                <span class="expense-category">${categoryText}</span>
+                            </div>
+                        </div>
+                        <div class="expense-amount ${amountClass}">
+                            ${amountSign}${parseInt(transaction.amount).toLocaleString()} so'm
+                        </div>
+                    </div>
+                `;
+            });
+            
+            expensesList.innerHTML = html;
         }
         
         // Yangi operatsiya qo'shish
@@ -668,24 +695,68 @@
                 return;
             }
             
-            // Bu yerda ma'lumotlarni saqlash logikasi qo'shiladi
+            // Yangi operatsiya yaratish
+            const newTransaction = {
+                id: Date.now(),
+                amount: amount,
+                reason: reason,
+                category: category,
+                type: type,
+                date: new Date().toISOString()
+            };
+            
+            // Balansni yangilash
+            if (type === 'chiqim') {
+                balance -= parseInt(amount);
+            } else {
+                balance += parseInt(amount);
+            }
+            
+            // Operatsiyani qo'shish
+            transactions.push(newTransaction);
+            
+            // UI ni yangilash
+            updateBalanceAndStats();
             showNotification('Operatsiya muvaffaqiyatli qo\'shildi!');
             
             // Formani tozalash
             document.getElementById('amount').value = '';
             document.getElementById('reason').value = '';
+            
+            // Asosiy sahifaga o'tish
+            tabs.forEach(t => t.classList.remove('active'));
+            tabContents.forEach(tc => tc.classList.remove('active'));
+            document.querySelector('[data-tab="main"]').classList.add('active');
+            document.getElementById('main-tab').classList.add('active');
         });
         
         // Dastur ishga tushganda
         document.addEventListener('DOMContentLoaded', () => {
-            initChart();
-            showNotification('Xush kelibsiz! Budjetingizni boshqarish uchun tayyor.');
-            
             // Telegram WebApp ni ishga tushirish
             if (typeof Telegram !== 'undefined') {
                 let tg = window.Telegram.WebApp;
                 tg.expand();
                 tg.MainButton.setText("Yopish").onClick(() => tg.close()).show();
+                
+                // Foydalanuvchi ma'lumotlarini olish
+                const user = tg.initDataUnsafe.user;
+                if (user && user.id !== 1034121198) {
+                    document.body.innerHTML = `
+                        <div style="display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column; padding: 20px; text-align: center;">
+                            <h2 style="color: #dc3545;">Ruxsat yo'q</h2>
+                            <p>Ushbu ilova faqat @Axrorbek_o6 uchun mo'ljallangan</p>
+                        </div>
+                    `;
+                    return;
+                }
+            }
+            
+            // Dasturiy ma'lumotlarni yuklash
+            updateBalanceAndStats();
+            
+            // Agar tarix sahifasida bo'lsa, operatsiyalarni yuklash
+            if (document.getElementById('history-tab').classList.contains('active')) {
+                loadExpenses();
             }
         });
     </script>
