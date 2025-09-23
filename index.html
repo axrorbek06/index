@@ -7,355 +7,78 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root {
-            --primary: #0088cc;
-            --secondary: #6c757d;
-            --success: #28a745;
-            --danger: #dc3545;
-            --light: #f8f9fa;
-            --dark: #343a40;
-        }
-        
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            color: #333;
-            line-height: 1.6;
-            min-height: 100vh;
-            padding: 0;
-            margin: 0;
-        }
-        
-        .container {
-            max-width: 100%;
-            padding: 15px;
-            margin: 0 auto;
-        }
-        
-        .header {
-            text-align: center;
-            padding: 20px 0;
-            background: linear-gradient(135deg, var(--primary), #0056b3);
-            color: white;
-            border-radius: 0 0 20px 20px;
-            margin-bottom: 25px;
-            box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
-        }
-        
-        .header h1 {
-            font-size: 24px;
-            margin-bottom: 5px;
-        }
-        
-        .header p {
-            opacity: 0.9;
-            font-size: 14px;
-        }
-        
-        .card {
-            background: white;
-            padding: 20px;
-            border-radius: 16px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-        }
-        
-        .balance-card {
-            text-align: center;
-            background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%);
-            color: white;
-        }
-        
-        .balance-label {
-            font-size: 14px;
-            opacity: 0.9;
-            margin-bottom: 5px;
-        }
-        
-        .balance-amount {
-            font-size: 32px;
-            font-weight: bold;
-            margin: 10px 0;
-        }
-        
-        .stats-cards {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .stat-card {
-            text-align: center;
-            padding: 15px;
-        }
-        
-        .stat-label {
-            font-size: 13px;
-            color: var(--secondary);
-            margin-bottom: 5px;
-        }
-        
-        .stat-value {
-            font-size: 20px;
-            font-weight: bold;
-        }
-        
-        .stat-value.income {
-            color: var(--success);
-        }
-        
-        .stat-value.expense {
-            color: var(--danger);
-        }
-        
-        .chart-container {
-            position: relative;
-            height: 250px;
-            margin-bottom: 20px;
-        }
-        
-        .tabs {
-            display: flex;
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
-            margin-bottom: 20px;
-        }
-        
-        .tab {
-            flex: 1;
-            padding: 15px;
-            text-align: center;
-            cursor: pointer;
-            font-weight: 500;
-            transition: background 0.3s ease;
-        }
-        
-        .tab.active {
-            background-color: var(--primary);
-            color: white;
-        }
-        
-        .form-group {
-            margin-bottom: 18px;
-        }
-        
-        .form-label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 500;
-            color: var(--dark);
-        }
-        
-        .form-input {
-            width: 100%;
-            padding: 14px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            font-size: 16px;
-            transition: border-color 0.3s ease;
-        }
-        
-        .form-input:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-        
-        .form-select {
-            width: 100%;
-            padding: 14px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            background-color: white;
-            font-size: 16px;
-        }
-        
-        .btn {
-            display: block;
-            width: 100%;
-            padding: 16px;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            text-align: center;
-            transition: background 0.3s ease;
-        }
-        
-        .btn-primary {
-            background-color: var(--primary);
-            color: white;
-        }
-        
-        .btn-success {
-            background-color: var(--success);
-            color: white;
-        }
-        
-        .btn-danger {
-            background-color: var(--danger);
-            color: white;
-        }
-        
-        .history-section {
-            margin-bottom: 20px;
-        }
-        
-        .section-title {
-            font-size: 18px;
-            margin-bottom: 15px;
-            color: var(--dark);
-        }
-        
-        .filter-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        
-        .filter-btn {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid var(--primary);
-            background: white;
-            color: var(--primary);
-            border-radius: 8px;
-            cursor: pointer;
-            text-align: center;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
-        
-        .filter-btn.active {
-            background: var(--primary);
-            color: white;
-        }
-        
-        .expense-item {
-            padding: 16px;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .expense-item:last-child {
-            border-bottom: none;
-        }
-        
-        .expense-info {
-            flex: 1;
-        }
-        
-        .expense-title {
-            font-weight: 500;
-            margin-bottom: 4px;
-        }
-        
-        .expense-details {
-            display: flex;
-            align-items: center;
-            font-size: 13px;
-            color: var(--secondary);
-        }
-        
-        .expense-amount {
-            font-weight: bold;
-            font-size: 18px;
-        }
-        
-        .expense-income {
-            color: var(--success);
-        }
-        
-        .expense-outcome {
-            color: var(--danger);
-        }
-        
-        .expense-category {
-            background: #f0f0f0;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 12px;
-            margin-left: 8px;
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 30px;
-            color: var(--secondary);
-        }
-        
-        .hidden {
-            display: none;
-        }
-        
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 20px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
-            transform: translateX(100%);
-            transition: transform 0.3s ease;
-            z-index: 1000;
-        }
-        
-        .notification.show {
-            transform: translateX(0);
-        }
-        
-        .notification.success {
-            border-left: 4px solid var(--success);
-        }
-        
-        .notification.error {
-            border-left: 4px solid var(--danger);
-        }
-        
-        .tab-content {
-            display: none;
-        }
-        
-        .tab-content.active {
-            display: block;
-        }
-        
+        /* Asosiy CSS kodlari o'zgarmagan (qisqartirilgan) */
+        :root { --primary: #0088cc; --secondary: #6c757d; --success: #28a745; --danger: #dc3545; --light: #f8f9fa; --dark: #343a40; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); color: #333; line-height: 1.6; min-height: 100vh; padding: 0; margin: 0; }
+        .container { max-width: 100%; padding: 15px; margin: 0 auto; }
+        .header { text-align: center; padding: 20px 0; background: linear-gradient(135deg, var(--primary), #0056b3); color: white; border-radius: 0 0 20px 20px; margin-bottom: 25px; box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3); }
+        .header h1 { font-size: 24px; margin-bottom: 5px; }
+        .header p { opacity: 0.9; font-size: 14px; }
+        .card { background: white; padding: 20px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); }
+        .balance-card { text-align: center; background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%); color: white; }
+        .balance-label { font-size: 14px; opacity: 0.9; margin-bottom: 5px; }
+        .balance-amount { font-size: 32px; font-weight: bold; margin: 10px 0; }
+        .stats-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .stat-card { text-align: center; padding: 15px; }
+        .stat-label { font-size: 13px; color: var(--secondary); margin-bottom: 5px; }
+        .stat-value { font-size: 20px; font-weight: bold; }
+        .stat-value.income { color: var(--success); }
+        .stat-value.expense { color: var(--danger); }
+        .chart-container { position: relative; height: 250px; margin-bottom: 20px; }
+        .tabs { display: flex; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08); margin-bottom: 20px; }
+        .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-weight: 500; transition: background 0.3s ease; }
+        .tab.active { background-color: var(--primary); color: white; }
+        .form-group { margin-bottom: 18px; }
+        .form-label { display: block; margin-bottom: 6px; font-weight: 500; color: var(--dark); }
+        .form-input { width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; transition: border-color 0.3s ease; }
+        .form-input:focus { outline: none; border-color: var(--primary); }
+        .form-select { width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: 10px; background-color: white; font-size: 16px; }
+        .btn { display: block; width: 100%; padding: 16px; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; text-align: center; transition: background 0.3s ease; }
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-success { background-color: var(--success); color: white; }
+        .btn-danger { background-color: var(--danger); color: white; }
+        .btn-warning { background-color: #ffc107; color: black; }
+        .history-section { margin-bottom: 20px; }
+        .section-title { font-size: 18px; margin-bottom: 15px; color: var(--dark); }
+        .filter-buttons { display: flex; gap: 10px; margin-bottom: 15px; }
+        .filter-btn { flex: 1; padding: 10px; border: 1px solid var(--primary); background: white; color: var(--primary); border-radius: 8px; cursor: pointer; text-align: center; font-size: 14px; transition: all 0.3s ease; }
+        .filter-btn.active { background: var(--primary); color: white; }
+        .expense-item { padding: 16px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .expense-item:last-child { border-bottom: none; }
+        .expense-info { flex: 1; }
+        .expense-title { font-weight: 500; margin-bottom: 4px; }
+        .expense-details { display: flex; align-items: center; font-size: 13px; color: var(--secondary); }
+        .expense-amount { font-weight: bold; font-size: 18px; }
+        .expense-income { color: var(--success); }
+        .expense-outcome { color: var(--danger); }
+        .expense-category { background: #f0f0f0; padding: 4px 10px; border-radius: 12px; font-size: 12px; margin-left: 8px; }
+        .expense-actions { display: flex; gap: 8px; margin-left: 10px; }
+        .action-btn { padding: 6px 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        .edit-btn { background: #ffc107; color: black; }
+        .delete-btn { background: #dc3545; color: white; }
+        .loading { text-align: center; padding: 30px; color: var(--secondary); }
+        .hidden { display: none; }
+        .notification { position: fixed; top: 20px; right: 20px; padding: 15px 20px; background: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15); transform: translateX(100%); transition: transform 0.3s ease; z-index: 1000; }
+        .notification.show { transform: translateX(0); }
+        .notification.success { border-left: 4px solid var(--success); }
+        .notification.error { border-left: 4px solid var(--danger); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .management-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 20px; border-radius: 12px; width: 90%; max-width: 500px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .modal-title { font-size: 18px; font-weight: bold; }
+        .close-modal { background: none; border: none; font-size: 24px; cursor: pointer; }
         @media (max-width: 480px) {
-            .container {
-                padding: 10px;
-            }
-            
-            .header {
-                padding: 15px 0;
-            }
-            
-            .header h1 {
-                font-size: 20px;
-            }
-            
-            .balance-amount {
-                font-size: 28px;
-            }
-            
-            .stats-cards {
-                grid-template-columns: 1fr;
-            }
-            
-            .card {
-                padding: 15px;
-            }
+            .container { padding: 10px; }
+            .header { padding: 15px 0; }
+            .header h1 { font-size: 20px; }
+            .balance-amount { font-size: 28px; }
+            .stats-cards { grid-template-columns: 1fr; }
+            .card { padding: 15px; }
+            .management-buttons { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -370,6 +93,7 @@
             <div class="tab active" data-tab="main">Asosiy</div>
             <div class="tab" data-tab="history">Tarix</div>
             <div class="tab" data-tab="add">Qo'shish</div>
+            <div class="tab" data-tab="manage">Boshqarish</div>
         </div>
         
         <div id="main-tab" class="tab-content active">
@@ -455,6 +179,73 @@
                 <button class="btn btn-primary" id="add-transaction">Qo'shish</button>
             </div>
         </div>
+        
+        <div id="manage-tab" class="tab-content">
+            <div class="card">
+                <div class="section-title">
+                    <span>Budjetni boshqarish</span>
+                </div>
+                
+                <div class="management-buttons">
+                    <button class="btn btn-warning" id="reset-chart">Chartni 0 ga tushirish</button>
+                    <button class="btn btn-danger" id="reset-month">Yangi oy boshlash</button>
+                    <button class="btn btn-danger" id="reset-all">Barchasini tozalash</button>
+                    <button class="btn btn-primary" id="export-data">Google Sheets ga eksport</button>
+                </div>
+                
+                <div class="section-title" style="margin-top: 20px;">
+                    <span>Google Sheets sozlamalari</span>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Google Sheets URL</label>
+                    <input type="text" id="sheet-url" class="form-input" placeholder="Google Sheets havolasi">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">API kaliti</label>
+                    <input type="text" id="api-key" class="form-input" placeholder="API kaliti">
+                </div>
+                
+                <button class="btn btn-success" id="save-settings">Sozlamalarni saqlash</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tahrirlash modali -->
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Operatsiyani tahrirlash</div>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Summa</label>
+                <input type="number" id="edit-amount" class="form-input">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Sabab</label>
+                <input type="text" id="edit-reason" class="form-input">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Kategoriya</label>
+                <select id="edit-category" class="form-select">
+                    <option value="uy">UY</option>
+                    <option value="kv">Kvartira</option>
+                    <option value="ov">Oziq-ovqat</option>
+                    <option value="ozm">Ozm</option>
+                    <option value="boshqa">Boshqa</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Tur</label>
+                <select id="edit-type" class="form-select">
+                    <option value="chiqim">Chiqim</option>
+                    <option value="kirim">Kirim</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" id="save-edit">Saqlash</button>
+        </div>
     </div>
 
     <div id="notification" class="notification">
@@ -470,25 +261,48 @@
         const notification = document.getElementById('notification');
         const notificationMessage = document.getElementById('notification-message');
         
-        // Ma'lumotlarni saqlash (keyinroq Google Sheets bilan almashtiriladi)
+        // Boshqarish tugmalari
+        const resetChartBtn = document.getElementById('reset-chart');
+        const resetMonthBtn = document.getElementById('reset-month');
+        const resetAllBtn = document.getElementById('reset-all');
+        const exportDataBtn = document.getElementById('export-data');
+        const saveSettingsBtn = document.getElementById('save-settings');
+        
+        // Modal elementlari
+        const editModal = document.getElementById('edit-modal');
+        const closeModalBtn = document.querySelector('.close-modal');
+        const saveEditBtn = document.getElementById('save-edit');
+        
+        // Ma'lumotlarni saqlash
         let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
         let balance = parseInt(localStorage.getItem('balance')) || 0;
+        let currentMonth = localStorage.getItem('currentMonth') || new Date().getMonth();
+        let currentYear = localStorage.getItem('currentYear') || new Date().getFullYear();
+        let editingTransactionId = null;
+        
+        // Google Sheets sozlamalari
+        let sheetSettings = JSON.parse(localStorage.getItem('sheetSettings')) || {
+            url: '',
+            apiKey: ''
+        };
         
         // Tablarni boshqarish
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
                 const tabId = tab.getAttribute('data-tab');
                 
-                // Faqat faol tab va kontentni ko'rsatish
                 tabs.forEach(t => t.classList.remove('active'));
                 tabContents.forEach(tc => tc.classList.remove('active'));
                 
                 tab.classList.add('active');
                 document.getElementById(`${tabId}-tab`).classList.add('active');
                 
-                // Agar tarix sahifasiga o'tilsa, ma'lumotlarni yangila
                 if (tabId === 'history') {
                     loadExpenses();
+                } else if (tabId === 'manage') {
+                    // Sozlamalarni yuklash
+                    document.getElementById('sheet-url').value = sheetSettings.url;
+                    document.getElementById('api-key').value = sheetSettings.apiKey;
                 }
             });
         });
@@ -498,8 +312,6 @@
             button.addEventListener('click', () => {
                 filterButtons.forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
-                
-                // Filtrlash
                 loadExpenses();
             });
         });
@@ -519,6 +331,13 @@
         function initChart() {
             const ctx = document.getElementById('chart').getContext('2d');
             
+            // Faqat joriy oy uchun ma'lumotlarni filtrlash
+            const currentMonthTransactions = transactions.filter(t => {
+                const transactionDate = new Date(t.date);
+                return transactionDate.getMonth() === parseInt(currentMonth) && 
+                       transactionDate.getFullYear() === parseInt(currentYear);
+            });
+            
             // Kategoriyalar bo'yicha chiqimlarni hisoblash
             const categories = {
                 'uy': 0,
@@ -528,7 +347,7 @@
                 'boshqa': 0
             };
             
-            transactions.filter(t => t.type === 'chiqim').forEach(transaction => {
+            currentMonthTransactions.filter(t => t.type === 'chiqim').forEach(transaction => {
                 if (categories.hasOwnProperty(transaction.category)) {
                     categories[transaction.category] += parseInt(transaction.amount);
                 }
@@ -553,6 +372,13 @@
                     data.push(value);
                 }
             });
+            
+            // Agar hech qanday ma'lumot bo'lmasa
+            if (labels.length === 0) {
+                labels.push('Ma\'lumot yo\'q');
+                data.push(1);
+                colors.length = 1;
+            }
             
             const chartData = {
                 labels: labels,
@@ -604,16 +430,20 @@
             // Joriy balans
             document.getElementById('current-balance').textContent = balance.toLocaleString() + ' so\'m';
             
-            // Bugungi va oylik chiqimlar
+            // Bugungi va oylik chiqimlar (faqat joriy oy uchun)
             const today = new Date().toDateString();
-            const thisMonth = new Date().getMonth();
             
             const todayExpense = transactions
                 .filter(t => t.type === 'chiqim' && new Date(t.date).toDateString() === today)
                 .reduce((total, t) => total + parseInt(t.amount), 0);
                 
             const monthlyExpense = transactions
-                .filter(t => t.type === 'chiqim' && new Date(t.date).getMonth() === thisMonth)
+                .filter(t => {
+                    const transactionDate = new Date(t.date);
+                    return t.type === 'chiqim' && 
+                           transactionDate.getMonth() === parseInt(currentMonth) && 
+                           transactionDate.getFullYear() === parseInt(currentYear);
+                })
                 .reduce((total, t) => total + parseInt(t.amount), 0);
                 
             document.getElementById('today-expense').textContent = todayExpense.toLocaleString() + ' so\'m';
@@ -625,6 +455,8 @@
             // Ma'lumotlarni saqlash
             localStorage.setItem('transactions', JSON.stringify(transactions));
             localStorage.setItem('balance', balance);
+            localStorage.setItem('currentMonth', currentMonth);
+            localStorage.setItem('currentYear', currentYear);
         }
         
         // Chiqimlarni yuklash va ko'rsatish
@@ -635,14 +467,20 @@
             // Filtrlash
             let filteredTransactions = [...transactions].reverse(); // Eng yangisi birinchi
             
+            // Faqat joriy oy uchun ma'lumotlarni filtrlash
+            filteredTransactions = filteredTransactions.filter(t => {
+                const transactionDate = new Date(t.date);
+                return transactionDate.getMonth() === parseInt(currentMonth) && 
+                       transactionDate.getFullYear() === parseInt(currentYear);
+            });
+            
             if (filter === 'week') {
                 const oneWeekAgo = new Date();
                 oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
                 filteredTransactions = filteredTransactions.filter(t => new Date(t.date) >= oneWeekAgo);
             } else if (filter === 'month') {
-                const oneMonthAgo = new Date();
-                oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-                filteredTransactions = filteredTransactions.filter(t => new Date(t.date) >= oneMonthAgo);
+                // Bu holda joriy oy ma'lumotlari ko'rsatiladi
+                // Hech qanday qo'shimcha filtrlash kerak emas
             }
             
             if (filteredTransactions.length === 0) {
@@ -676,11 +514,70 @@
                         <div class="expense-amount ${amountClass}">
                             ${amountSign}${parseInt(transaction.amount).toLocaleString()} so'm
                         </div>
+                        <div class="expense-actions">
+                            <button class="action-btn edit-btn" data-id="${transaction.id}">Tahrir</button>
+                            <button class="action-btn delete-btn" data-id="${transaction.id}">O'chir</button>
+                        </div>
                     </div>
                 `;
             });
             
             expensesList.innerHTML = html;
+            
+            // Tahrirlash va o'chirish tugmalariga event listener qo'shish
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.target.getAttribute('data-id'));
+                    editTransaction(id);
+                });
+            });
+            
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.target.getAttribute('data-id'));
+                    deleteTransaction(id);
+                });
+            });
+        }
+        
+        // Operatsiyani tahrirlash
+        function editTransaction(id) {
+            const transaction = transactions.find(t => t.id === id);
+            if (!transaction) return;
+            
+            // Modalni to'ldirish
+            document.getElementById('edit-amount').value = transaction.amount;
+            document.getElementById('edit-reason').value = transaction.reason;
+            document.getElementById('edit-category').value = transaction.category;
+            document.getElementById('edit-type').value = transaction.type;
+            
+            editingTransactionId = id;
+            editModal.style.display = 'flex';
+        }
+        
+        // Operatsiyani o'chirish
+        function deleteTransaction(id) {
+            if (!confirm('Bu operatsiyani o\'chirishni istaysizmi?')) return;
+            
+            const transactionIndex = transactions.findIndex(t => t.id === id);
+            if (transactionIndex === -1) return;
+            
+            const transaction = transactions[transactionIndex];
+            
+            // Balansni tuzatish
+            if (transaction.type === 'chiqim') {
+                balance += parseInt(transaction.amount);
+            } else {
+                balance -= parseInt(transaction.amount);
+            }
+            
+            // Operatsiyani o'chirish
+            transactions.splice(transactionIndex, 1);
+            
+            // UI ni yangilash
+            updateBalanceAndStats();
+            loadExpenses();
+            showNotification('Operatsiya muvaffaqiyatli o\'chirildi!');
         }
         
         // Yangi operatsiya qo'shish
@@ -722,12 +619,155 @@
             // Formani tozalash
             document.getElementById('amount').value = '';
             document.getElementById('reason').value = '';
+        });
+        
+        // Chartni 0 ga tushirish
+        resetChartBtn.addEventListener('click', () => {
+            if (!confirm('Chartni 0 ga tushirishni istaysizmi? Bu faqat joriy oy ma\'lumotlarini tozalaydi.')) return;
             
-            // Asosiy sahifaga o'tish
-            tabs.forEach(t => t.classList.remove('active'));
-            tabContents.forEach(tc => tc.classList.remove('active'));
-            document.querySelector('[data-tab="main"]').classList.add('active');
-            document.getElementById('main-tab').classList.add('active');
+            // Faqat joriy oy operatsiyalarini o'chirish
+            transactions = transactions.filter(t => {
+                const transactionDate = new Date(t.date);
+                return !(transactionDate.getMonth() === parseInt(currentMonth) && 
+                        transactionDate.getFullYear() === parseInt(currentYear));
+            });
+            
+            // Balansni qayta hisoblash
+            balance = transactions.reduce((total, t) => {
+                return t.type === 'kirim' ? total + parseInt(t.amount) : total - parseInt(t.amount);
+            }, 0);
+            
+            updateBalanceAndStats();
+            showNotification('Chart muvaffaqiyatli 0 ga tushirildi!');
+        });
+        
+        // Yangi oy boshlash
+        resetMonthBtn.addEventListener('click', () => {
+            if (!confirm('Yangi oy boshlashni istaysizmi? Joriy oy ma\'lumotlari saqlanib qoladi.')) return;
+            
+            // Oyni yangilash
+            const now = new Date();
+            currentMonth = now.getMonth();
+            currentYear = now.getFullYear();
+            
+            updateBalanceAndStats();
+            showNotification('Yangi oy muvaffaqiyatli boshlandi!');
+        });
+        
+        // Barchasini tozalash
+        resetAllBtn.addEventListener('click', () => {
+            if (!confirm('Barcha ma\'lumotlarni tozalashni istaysizmi? Bu amalni bekor qilib bo\'lmaydi.')) return;
+            
+            transactions = [];
+            balance = 0;
+            currentMonth = new Date().getMonth();
+            currentYear = new Date().getFullYear();
+            
+            updateBalanceAndStats();
+            loadExpenses();
+            showNotification('Barcha ma\'lumotlar tozalandi!');
+        });
+        
+        // Google Sheets ga eksport qilish
+        exportDataBtn.addEventListener('click', async () => {
+            if (!sheetSettings.url || !sheetSettings.apiKey) {
+                showNotification('Iltimos, avval Google Sheets sozlamalarini to\'ldiring!', false);
+                return;
+            }
+            
+            try {
+                showNotification('Ma\'lumotlar Google Sheets ga yuklanmoqda...');
+                
+                // Bu yerda Google Apps Script orqali ma'lumotlarni yuborish
+                // Sizning Google Sheets scriptingizga moslab o'zgartirishingiz kerak
+                const response = await fetch(sheetSettings.url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        apiKey: sheetSettings.apiKey,
+                        transactions: transactions,
+                        balance: balance
+                    })
+                });
+                
+                if (response.ok) {
+                    showNotification('Ma\'lumotlar Google Sheets ga muvaffaqiyatli yuklandi!');
+                } else {
+                    showNotification('Xatolik yuz berdi. Iltimos, sozlamalarni tekshiring.', false);
+                }
+            } catch (error) {
+                showNotification('Xatolik yuz berdi: ' + error.message, false);
+            }
+        });
+        
+        // Sozlamalarni saqlash
+        saveSettingsBtn.addEventListener('click', () => {
+            sheetSettings.url = document.getElementById('sheet-url').value;
+            sheetSettings.apiKey = document.getElementById('api-key').value;
+            
+            localStorage.setItem('sheetSettings', JSON.stringify(sheetSettings));
+            showNotification('Sozlamalar muvaffaqiyatli saqlandi!');
+        });
+        
+        // Modalni yopish
+        closeModalBtn.addEventListener('click', () => {
+            editModal.style.display = 'none';
+        });
+        
+        // Modal tashqarisiga bosganda yopish
+        window.addEventListener('click', (e) => {
+            if (e.target === editModal) {
+                editModal.style.display = 'none';
+            }
+        });
+        
+        // Tahrirlangan operatsiyani saqlash
+        saveEditBtn.addEventListener('click', () => {
+            const amount = document.getElementById('edit-amount').value;
+            const reason = document.getElementById('edit-reason').value;
+            const category = document.getElementById('edit-category').value;
+            const type = document.getElementById('edit-type').value;
+            
+            if (!amount || !reason) {
+                showNotification('Iltimos, barcha maydonlarni to\'ldiring!', false);
+                return;
+            }
+            
+            const transactionIndex = transactions.findIndex(t => t.id === editingTransactionId);
+            if (transactionIndex === -1) return;
+            
+            const oldTransaction = transactions[transactionIndex];
+            
+            // Avval eski operatsiyaning ta'sirini balansdan olib tashlaymiz
+            if (oldTransaction.type === 'chiqim') {
+                balance += parseInt(oldTransaction.amount);
+            } else {
+                balance -= parseInt(oldTransaction.amount);
+            }
+            
+            // Yangi operatsiyaning ta'sirini balansga qo'shamiz
+            if (type === 'chiqim') {
+                balance -= parseInt(amount);
+            } else {
+                balance += parseInt(amount);
+            }
+            
+            // Operatsiyani yangilash
+            transactions[transactionIndex] = {
+                ...oldTransaction,
+                amount: amount,
+                reason: reason,
+                category: category,
+                type: type
+            };
+            
+            // UI ni yangilash
+            updateBalanceAndStats();
+            loadExpenses();
+            editModal.style.display = 'none';
+            showNotification('Operatsiya muvaffaqiyatli tahrirlandi!');
         });
         
         // Dastur ishga tushganda
