@@ -6,7 +6,6 @@
     <title>Mening Shaxsiy Budjetim</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         /* Asosiy CSS kodlari o'zgarmagan (qisqartirilgan) */
         :root { --primary: #0088cc; --secondary: #6c757d; --success: #28a745; --danger: #dc3545; --light: #f8f9fa; --dark: #343a40; }
@@ -20,10 +19,10 @@
         .balance-card { text-align: center; background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%); color: white; }
         .balance-label { font-size: 14px; opacity: 0.9; margin-bottom: 5px; }
         .balance-amount { font-size: 32px; font-weight: bold; margin: 10px 0; }
-        .stats-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .stats-cards { display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 20px; }
         .stat-card { text-align: center; padding: 15px; }
         .stat-label { font-size: 13px; color: var(--secondary); margin-bottom: 5px; }
-        .stat-value { font-size: 20px; font-weight: bold; }
+        .stat-value { font-size: 24px; font-weight: bold; }
         .stat-value.income { color: var(--success); }
         .stat-value.expense { color: var(--danger); }
         .chart-container { position: relative; height: 250px; margin-bottom: 20px; }
@@ -66,14 +65,14 @@
         .notification.error { border-left: 4px solid var(--danger); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        .management-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+        .management-buttons { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 20px; }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; }
         .modal-content { background: white; padding: 20px; border-radius: 12px; width: 90%; max-width: 500px; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .modal-title { font-size: 18px; font-weight: bold; }
         .close-modal { background: none; border: none; font-size: 24px; cursor: pointer; }
         .download-section { margin-top: 20px; }
-        .download-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .download-buttons { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 10px; }
         @media (max-width: 480px) {
             .container { padding: 10px; }
             .header { padding: 15px 0; }
@@ -107,10 +106,6 @@
             </div>
             
             <div class="stats-cards">
-                <div class="stat-card card">
-                    <div class="stat-label">Bugungi chiqim</div>
-                    <div class="stat-value expense" id="today-expense">0 so'm</div>
-                </div>
                 <div class="stat-card card">
                     <div class="stat-label">Oylik chiqim</div>
                     <div class="stat-value expense" id="monthly-expense">0 so'm</div>
@@ -194,7 +189,6 @@
                     <button class="btn btn-warning" id="reset-chart">Chartni 0 ga tushirish</button>
                     <button class="btn btn-danger" id="reset-month">Yangi oy boshlash</button>
                     <button class="btn btn-danger" id="reset-all">Barchasini tozalash</button>
-                    <button class="btn btn-primary" id="export-data">Google Sheets ga eksport</button>
                 </div>
                 
                 <div class="download-section">
@@ -203,26 +197,9 @@
                     </div>
                     
                     <div class="download-buttons">
-                        <button class="btn btn-success" id="download-excel">Excel formatda</button>
-                        <button class="btn btn-primary" id="download-csv">CSV formatda</button>
+                        <button class="btn btn-success" id="download-telegram">Telegram orqali yuklab olish</button>
                     </div>
                 </div>
-                
-                <div class="section-title" style="margin-top: 20px;">
-                    <span>Google Sheets sozlamalari</span>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Google Sheets URL</label>
-                    <input type="text" id="sheet-url" class="form-input" placeholder="Google Sheets havolasi">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">API kaliti</label>
-                    <input type="text" id="api-key" class="form-input" placeholder="API kaliti">
-                </div>
-                
-                <button class="btn btn-success" id="save-settings">Sozlamalarni saqlash</button>
             </div>
         </div>
     </div>
@@ -280,12 +257,7 @@
         const resetChartBtn = document.getElementById('reset-chart');
         const resetMonthBtn = document.getElementById('reset-month');
         const resetAllBtn = document.getElementById('reset-all');
-        const exportDataBtn = document.getElementById('export-data');
-        const saveSettingsBtn = document.getElementById('save-settings');
-        
-        // Yuklab olish tugmalari
-        const downloadExcelBtn = document.getElementById('download-excel');
-        const downloadCsvBtn = document.getElementById('download-csv');
+        const downloadTelegramBtn = document.getElementById('download-telegram');
         
         // Modal elementlari
         const editModal = document.getElementById('edit-modal');
@@ -298,12 +270,6 @@
         let currentMonth = localStorage.getItem('currentMonth') || new Date().getMonth();
         let currentYear = localStorage.getItem('currentYear') || new Date().getFullYear();
         let editingTransactionId = null;
-        
-        // Google Sheets sozlamalari
-        let sheetSettings = JSON.parse(localStorage.getItem('sheetSettings')) || {
-            url: '',
-            apiKey: ''
-        };
         
         // Tablarni boshqarish
         tabs.forEach(tab => {
@@ -318,10 +284,6 @@
                 
                 if (tabId === 'history') {
                     loadExpenses();
-                } else if (tabId === 'manage') {
-                    // Sozlamalarni yuklash
-                    document.getElementById('sheet-url').value = sheetSettings.url;
-                    document.getElementById('api-key').value = sheetSettings.apiKey;
                 }
             });
         });
@@ -449,13 +411,7 @@
             // Joriy balans
             document.getElementById('current-balance').textContent = balance.toLocaleString() + ' so\'m';
             
-            // Bugungi va oylik chiqimlar (faqat joriy oy uchun)
-            const today = new Date().toDateString();
-            
-            const todayExpense = transactions
-                .filter(t => t.type === 'chiqim' && new Date(t.date).toDateString() === today)
-                .reduce((total, t) => total + parseInt(t.amount), 0);
-                
+            // Oylik chiqimlar (faqat joriy oy uchun)
             const monthlyExpense = transactions
                 .filter(t => {
                     const transactionDate = new Date(t.date);
@@ -465,7 +421,6 @@
                 })
                 .reduce((total, t) => total + parseInt(t.amount), 0);
                 
-            document.getElementById('today-expense').textContent = todayExpense.toLocaleString() + ' so\'m';
             document.getElementById('monthly-expense').textContent = monthlyExpense.toLocaleString() + ' so\'m';
             
             // Chartni yangilash
@@ -687,112 +642,45 @@
             showNotification('Barcha ma\'lumotlar tozalandi!');
         });
         
-        // Google Sheets ga eksport qilish
-        exportDataBtn.addEventListener('click', async () => {
-            if (!sheetSettings.url || !sheetSettings.apiKey) {
-                showNotification('Iltimos, avval Google Sheets sozlamalarini to\'ldiring!', false);
+        // Telegram orqali ma'lumotlarni yuklab olish
+        downloadTelegramBtn.addEventListener('click', () => {
+            if (transactions.length === 0) {
+                showNotification('Yuklab olish uchun ma\'lumot yo\'q!', false);
                 return;
             }
             
             try {
-                showNotification('Ma\'lumotlar Google Sheets ga yuklanmoqda...');
+                // Ma'lumotlarni matn shaklida tayyorlash
+                let textContent = "Mening Budjet Ma'lumotlarim\n\n";
+                textContent += `Jami balans: ${balance.toLocaleString()} so'm\n`;
+                textContent += `Jami operatsiyalar: ${transactions.length} ta\n\n`;
                 
-                // Bu yerda Google Apps Script orqali ma'lumotlarni yuborish
-                // Sizning Google Sheets scriptingizga moslab o'zgartirishingiz kerak
-                const response = await fetch(sheetSettings.url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        apiKey: sheetSettings.apiKey,
-                        transactions: transactions,
-                        balance: balance
-                    })
+                // Operatsiyalarni qo'shish
+                transactions.forEach((t, index) => {
+                    const typeText = t.type === 'chiqim' ? 'Chiqim' : 'Kirim';
+                    const date = new Date(t.date).toLocaleDateString('uz-UZ');
+                    textContent += `${index + 1}. ${date} - ${t.reason} - ${parseInt(t.amount).toLocaleString()} so'm (${typeText})\n`;
                 });
                 
-                if (response.ok) {
-                    showNotification('Ma\'lumotlar Google Sheets ga muvaffaqiyatli yuklandi!');
+                // Telegram WebApp orqali yuborish
+                if (typeof Telegram !== 'undefined') {
+                    const tg = window.Telegram.WebApp;
+                    
+                    // Ma'lumotlarni foydalanuvchiga yuborish
+                    tg.sendData(textContent);
+                    showNotification('Ma\'lumotlar Telegramga yuborildi!');
                 } else {
-                    showNotification('Xatolik yuz berdi. Iltimos, sozlamalarni tekshiring.', false);
+                    // Agar Telegram emas, boshqa brauzerda ishlayotgan bo'lsa
+                    const blob = new Blob([textContent], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `budjet_ma'lumotlari_${new Date().toISOString().slice(0, 10)}.txt`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    showNotification('Ma\'lumotlar fayl sifatida yuklab olindi!');
                 }
-            } catch (error) {
-                showNotification('Xatolik yuz berdi: ' + error.message, false);
-            }
-        });
-        
-        // Sozlamalarni saqlash
-        saveSettingsBtn.addEventListener('click', () => {
-            sheetSettings.url = document.getElementById('sheet-url').value;
-            sheetSettings.apiKey = document.getElementById('api-key').value;
-            
-            localStorage.setItem('sheetSettings', JSON.stringify(sheetSettings));
-            showNotification('Sozlamalar muvaffaqiyatli saqlandi!');
-        });
-        
-        // Excel formatda yuklab olish
-        downloadExcelBtn.addEventListener('click', () => {
-            if (transactions.length === 0) {
-                showNotification('Yuklab olish uchun ma\'lumot yo\'q!', false);
-                return;
-            }
-            
-            try {
-                // Ma'lumotlarni tayyorlash
-                const data = transactions.map(t => ({
-                    'ID': t.id,
-                    'Sana': new Date(t.date).toLocaleDateString('uz-UZ'),
-                    'Summa': parseInt(t.amount),
-                    'Sabab': t.reason,
-                    'Kategoriya': getCategoryText(t.category),
-                    'Tur': getTypeText(t.type)
-                }));
-                
-                // Workbook yaratish
-                const ws = XLSX.utils.json_to_sheet(data);
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, 'Operatsiyalar');
-                
-                // Excel faylini yuklab olish
-                const fileName = `budjet_ma'lumotlari_${new Date().toISOString().slice(0, 10)}.xlsx`;
-                XLSX.writeFile(wb, fileName);
-                
-                showNotification('Excel fayli muvaffaqiyatli yuklab olindi!');
-            } catch (error) {
-                showNotification('Xatolik yuz berdi: ' + error.message, false);
-            }
-        });
-        
-        // CSV formatda yuklab olish
-        downloadCsvBtn.addEventListener('click', () => {
-            if (transactions.length === 0) {
-                showNotification('Yuklab olish uchun ma\'lumot yo\'q!', false);
-                return;
-            }
-            
-            try {
-                // CSV sarlavhasi
-                let csvContent = 'ID,Sana,Summa,Sabab,Kategoriya,Tur\n';
-                
-                // Ma'lumotlarni qo'shish
-                transactions.forEach(t => {
-                    csvContent += `${t.id},"${new Date(t.date).toLocaleDateString('uz-UZ')}",${t.amount},"${t.reason}","${getCategoryText(t.category)}","${getTypeText(t.type)}"\n`;
-                });
-                
-                // Blob yaratish
-                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                const url = URL.createObjectURL(blob);
-                
-                // Yuklab olish uchun havola yaratish
-                const link = document.createElement('a');
-                link.setAttribute('href', url);
-                link.setAttribute('download', `budjet_ma'lumotlari_${new Date().toISOString().slice(0, 10)}.csv`);
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
-                showNotification('CSV fayli muvaffaqiyatli yuklab olindi!');
             } catch (error) {
                 showNotification('Xatolik yuz berdi: ' + error.message, false);
             }
@@ -808,11 +696,6 @@
                 case 'boshqa': return 'Boshqa';
                 default: return category;
             }
-        }
-        
-        // Tur matnini olish
-        function getTypeText(type) {
-            return type === 'chiqim' ? 'Chiqim' : 'Kirim';
         }
         
         // Modalni yopish
