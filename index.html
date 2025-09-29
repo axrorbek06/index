@@ -41,9 +41,10 @@
         .btn-warning { background-color: #ffc107; color: black; }
         .history-section { margin-bottom: 20px; }
         .section-title { font-size: 18px; margin-bottom: 15px; color: var(--dark); }
-        .filter-buttons { display: flex; gap: 10px; margin-bottom: 15px; }
-        .filter-btn { flex: 1; padding: 10px; border: 1px solid var(--primary); background: white; color: var(--primary); border-radius: 8px; cursor: pointer; text-align: center; font-size: 14px; transition: all 0.3s ease; }
+        .filter-buttons { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        .filter-btn { flex: 1; padding: 10px; border: 1px solid var(--primary); background: white; color: var(--primary); border-radius: 8px; cursor: pointer; text-align: center; font-size: 14px; transition: all 0.3s ease; min-width: 80px; }
         .filter-btn.active { background: var(--primary); color: white; }
+        .filter-select { padding: 10px; border: 1px solid var(--primary); border-radius: 8px; background: white; color: var(--primary); font-size: 14px; cursor: pointer; flex: 1; min-width: 150px; }
         .expense-item { padding: 16px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
         .expense-item:last-child { border-bottom: none; }
         .expense-info { flex: 1; }
@@ -82,6 +83,8 @@
             .card { padding: 15px; }
             .management-buttons { grid-template-columns: 1fr; }
             .download-buttons { grid-template-columns: 1fr; }
+            .filter-buttons { flex-direction: column; }
+            .filter-btn, .filter-select { min-width: 100%; }
         }
     </style>
 </head>
@@ -129,9 +132,16 @@
                 </div>
                 
                 <div class="filter-buttons">
-                    <div class="filter-btn active" data-filter="all">Barchasi</div>
                     <div class="filter-btn" data-filter="week">Oxirgi hafta</div>
                     <div class="filter-btn" data-filter="month">Oxirgi oy</div>
+                    <select id="category-filter" class="filter-select">
+                        <option value="all">Barchasi</option>
+                        <option value="uy">UY</option>
+                        <option value="kv">Kvartira</option>
+                        <option value="ov">Oziq-ovqat</option>
+                        <option value="ozm">Ozm</option>
+                        <option value="boshqa">Boshqa</option>
+                    </select>
                 </div>
                 
                 <div id="expenses-list" class="loading">
@@ -264,6 +274,9 @@
         const closeModalBtn = document.querySelector('.close-modal');
         const saveEditBtn = document.getElementById('save-edit');
         
+        // Kategoriya filteri
+        const categoryFilter = document.getElementById('category-filter');
+        
         // Ma'lumotlarni saqlash
         let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
         let balance = parseInt(localStorage.getItem('balance')) || 0;
@@ -296,6 +309,9 @@
                 loadExpenses();
             });
         });
+        
+        // Kategoriya filteri o'zgartirilganda
+        categoryFilter.addEventListener('change', loadExpenses);
         
         // Xabar ko'rsatish funksiyasi
         function showNotification(message, isSuccess = true) {
@@ -436,7 +452,9 @@
         // Chiqimlarni yuklash va ko'rsatish
         function loadExpenses() {
             const expensesList = document.getElementById('expenses-list');
-            const filter = document.querySelector('.filter-btn.active').getAttribute('data-filter');
+            const activeFilterBtn = document.querySelector('.filter-btn.active');
+            const filter = activeFilterBtn ? activeFilterBtn.getAttribute('data-filter') : 'week';
+            const selectedCategory = categoryFilter.value;
             
             // Filtrlash
             let filteredTransactions = [...transactions].reverse(); // Eng yangisi birinchi
@@ -448,6 +466,7 @@
                        transactionDate.getFullYear() === parseInt(currentYear);
             });
             
+            // Vaqt bo'yicha filtrlash
             if (filter === 'week') {
                 const oneWeekAgo = new Date();
                 oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
@@ -455,6 +474,11 @@
             } else if (filter === 'month') {
                 // Bu holda joriy oy ma'lumotlari ko'rsatiladi
                 // Hech qanday qo'shimcha filtrlash kerak emas
+            }
+            
+            // Kategoriya bo'yicha filtrlash
+            if (selectedCategory !== 'all') {
+                filteredTransactions = filteredTransactions.filter(t => t.category === selectedCategory);
             }
             
             if (filteredTransactions.length === 0) {
