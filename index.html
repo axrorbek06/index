@@ -74,6 +74,8 @@
         .close-modal { background: none; border: none; font-size: 24px; cursor: pointer; }
         .download-section { margin-top: 20px; }
         .download-buttons { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 10px; }
+        .download-options { display: flex; gap: 10px; margin-bottom: 10px; }
+        .download-options select { flex: 1; }
         @media (max-width: 480px) {
             .container { padding: 10px; }
             .header { padding: 15px 0; }
@@ -85,6 +87,7 @@
             .download-buttons { grid-template-columns: 1fr; }
             .filter-buttons { flex-direction: column; }
             .filter-btn, .filter-select { min-width: 100%; }
+            .download-options { flex-direction: column; }
         }
     </style>
 </head>
@@ -132,8 +135,8 @@
                 </div>
                 
                 <div class="filter-buttons">
-                    <div class="filter-btn" data-filter="week">Oxirgi hafta</div>
-                    <div class="filter-btn" data-filter="month">Oxirgi oy</div>
+                    <button class="filter-btn active" data-filter="week">Oxirgi hafta</button>
+                    <button class="filter-btn" data-filter="month">Oxirgi oy</button>
                     <select id="category-filter" class="filter-select">
                         <option value="all">Barchasi</option>
                         <option value="uy">UY</option>
@@ -206,8 +209,17 @@
                         <span>Ma'lumotlarni yuklab olish</span>
                     </div>
                     
+                    <div class="download-options">
+                        <select id="file-format" class="form-select">
+                            <option value="csv">CSV fayl (Excel)</option>
+                            <option value="txt">TXT fayl</option>
+                            <option value="json">JSON fayl</option>
+                        </select>
+                    </div>
+                    
                     <div class="download-buttons">
-                        <button class="btn btn-success" id="download-telegram">Telegram orqali yuklab olish</button>
+                        <button class="btn btn-success" id="download-btn">Yuklab olish</button>
+                        <button class="btn btn-primary" id="copy-data">Nusxa olish</button>
                     </div>
                 </div>
             </div>
@@ -255,66 +267,147 @@
     </div>
 
     <script>
-        // DOM elementlari
-        const tabs = document.querySelectorAll('.tab');
-        const tabContents = document.querySelectorAll('.tab-content');
-        const filterButtons = document.querySelectorAll('.filter-btn');
-        const addButton = document.getElementById('add-transaction');
-        const notification = document.getElementById('notification');
-        const notificationMessage = document.getElementById('notification-message');
-        
-        // Boshqarish tugmalari
-        const resetChartBtn = document.getElementById('reset-chart');
-        const resetMonthBtn = document.getElementById('reset-month');
-        const resetAllBtn = document.getElementById('reset-all');
-        const downloadTelegramBtn = document.getElementById('download-telegram');
-        
-        // Modal elementlari
-        const editModal = document.getElementById('edit-modal');
-        const closeModalBtn = document.querySelector('.close-modal');
-        const saveEditBtn = document.getElementById('save-edit');
-        
-        // Kategoriya filteri
-        const categoryFilter = document.getElementById('category-filter');
-        
+        // DOM elementlari - hammasini bir joyda aniqlaymiz
+        let tabs, tabContents, filterButtons, addButton, notification, notificationMessage;
+        let resetChartBtn, resetMonthBtn, resetAllBtn, copyDataBtn, downloadBtn;
+        let editModal, closeModalBtn, saveEditBtn;
+        let categoryFilter, fileFormatSelect;
+
         // Ma'lumotlarni saqlash
         let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
         let balance = parseInt(localStorage.getItem('balance')) || 0;
         let currentMonth = localStorage.getItem('currentMonth') || new Date().getMonth();
         let currentYear = localStorage.getItem('currentYear') || new Date().getFullYear();
         let editingTransactionId = null;
-        
-        // Tablarni boshqarish
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                const tabId = tab.getAttribute('data-tab');
+
+        // Dastur ishga tushganda
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM elementlarini topish
+            initializeDOM();
+            
+            // Telegram WebApp ni ishga tushirish
+            if (typeof Telegram !== 'undefined') {
+                let tg = window.Telegram.WebApp;
+                tg.expand();
+                tg.MainButton.setText("Yopish").onClick(() => tg.close()).show();
                 
-                tabs.forEach(t => t.classList.remove('active'));
-                tabContents.forEach(tc => tc.classList.remove('active'));
-                
-                tab.classList.add('active');
-                document.getElementById(`${tabId}-tab`).classList.add('active');
-                
-                if (tabId === 'history') {
+                // Foydalanuvchi ma'lumotlarini olish
+                const user = tg.initDataUnsafe.user;
+                if (user && user.id !== 1034121198) {
+                    document.body.innerHTML = `
+                        <div style="display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column; padding: 20px; text-align: center;">
+                            <h2 style="color: #dc3545;">Ruxsat yo'q</h2>
+                            <p>Ushbu ilova faqat @Axrorbek_o6 uchun mo'ljallangan</p>
+                        </div>
+                    `;
+                    return;
+                }
+            }
+            
+            // Event listenerlarni qo'shish
+            setupEventListeners();
+            
+            // Dasturiy ma'lumotlarni yuklash
+            updateBalanceAndStats();
+        });
+
+        // DOM elementlarini topish
+        function initializeDOM() {
+            tabs = document.querySelectorAll('.tab');
+            tabContents = document.querySelectorAll('.tab-content');
+            filterButtons = document.querySelectorAll('.filter-btn');
+            addButton = document.getElementById('add-transaction');
+            notification = document.getElementById('notification');
+            notificationMessage = document.getElementById('notification-message');
+            
+            // Boshqarish tugmalari
+            resetChartBtn = document.getElementById('reset-chart');
+            resetMonthBtn = document.getElementById('reset-month');
+            resetAllBtn = document.getElementById('reset-all');
+            copyDataBtn = document.getElementById('copy-data');
+            downloadBtn = document.getElementById('download-btn');
+            
+            // Modal elementlari
+            editModal = document.getElementById('edit-modal');
+            closeModalBtn = document.querySelector('.close-modal');
+            saveEditBtn = document.getElementById('save-edit');
+            
+            // Kategoriya filteri
+            categoryFilter = document.getElementById('category-filter');
+            
+            // Fayl formati selector
+            fileFormatSelect = document.getElementById('file-format');
+        }
+
+        // Event listenerlarni sozlash
+        function setupEventListeners() {
+            // Tablarni boshqarish
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                    
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(tc => tc.classList.remove('active'));
+                    
+                    tab.classList.add('active');
+                    document.getElementById(`${tabId}-tab`).classList.add('active');
+                    
+                    if (tabId === 'history') {
+                        loadExpenses();
+                    }
+                });
+            });
+            
+            // Filter tugmalarini boshqarish
+            filterButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
                     loadExpenses();
+                });
+            });
+            
+            // Kategoriya filteri o'zgartirilganda
+            categoryFilter.addEventListener('change', loadExpenses);
+            
+            // Yangi operatsiya qo'shish
+            addButton.addEventListener('click', addTransaction);
+            
+            // Chartni 0 ga tushirish
+            resetChartBtn.addEventListener('click', resetChart);
+            
+            // Yangi oy boshlash
+            resetMonthBtn.addEventListener('click', resetMonth);
+            
+            // Barchasini tozalash
+            resetAllBtn.addEventListener('click', resetAll);
+            
+            // Ma'lumotlarni nusxalash
+            copyDataBtn.addEventListener('click', copyData);
+            
+            // Ma'lumotlarni yuklab olish
+            downloadBtn.addEventListener('click', downloadData);
+            
+            // Modalni yopish
+            closeModalBtn.addEventListener('click', () => {
+                editModal.style.display = 'none';
+            });
+            
+            // Modal tashqarisiga bosganda yopish
+            window.addEventListener('click', (e) => {
+                if (e.target === editModal) {
+                    editModal.style.display = 'none';
                 }
             });
-        });
-        
-        // Filter tugmalarini boshqarish
-        filterButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                filterButtons.forEach(btn => btn.classList.remove('active'));
-                button.classList.add('active');
-                loadExpenses();
-            });
-        });
-        
-        // Kategoriya filteri o'zgartirilganda
-        categoryFilter.addEventListener('change', loadExpenses);
-        
+            
+            // Tahrirlangan operatsiyani saqlash
+            saveEditBtn.addEventListener('click', saveEdit);
+        }
+
         // Xabar ko'rsatish funksiyasi
         function showNotification(message, isSuccess = true) {
+            if (!notification || !notificationMessage) return;
+            
             notificationMessage.textContent = message;
             notification.className = 'notification ' + (isSuccess ? 'success' : 'error');
             notification.classList.add('show');
@@ -323,10 +416,16 @@
                 notification.classList.remove('show');
             }, 3000);
         }
-        
+
         // Chart yaratish
         function initChart() {
-            const ctx = document.getElementById('chart').getContext('2d');
+            const ctx = document.getElementById('chart');
+            if (!ctx) return;
+            
+            // Avvalgi chartni yo'q qilish
+            if (window.budgetChart) {
+                window.budgetChart.destroy();
+            }
             
             // Faqat joriy oy uchun ma'lumotlarni filtrlash
             const currentMonthTransactions = transactions.filter(t => {
@@ -409,11 +508,6 @@
                 }
             };
             
-            // Avvalgi chartni yo'q qilish
-            if (window.budgetChart) {
-                window.budgetChart.destroy();
-            }
-            
             // Yangi chart yaratish
             window.budgetChart = new Chart(ctx, {
                 type: 'doughnut',
@@ -421,11 +515,14 @@
                 options: options
             });
         }
-        
+
         // Balans va statistikani yangilash
         function updateBalanceAndStats() {
             // Joriy balans
-            document.getElementById('current-balance').textContent = balance.toLocaleString() + ' so\'m';
+            const currentBalanceEl = document.getElementById('current-balance');
+            if (currentBalanceEl) {
+                currentBalanceEl.textContent = balance.toLocaleString() + ' so\'m';
+            }
             
             // Oylik chiqimlar (faqat joriy oy uchun)
             const monthlyExpense = transactions
@@ -437,7 +534,10 @@
                 })
                 .reduce((total, t) => total + parseInt(t.amount), 0);
                 
-            document.getElementById('monthly-expense').textContent = monthlyExpense.toLocaleString() + ' so\'m';
+            const monthlyExpenseEl = document.getElementById('monthly-expense');
+            if (monthlyExpenseEl) {
+                monthlyExpenseEl.textContent = monthlyExpense.toLocaleString() + ' so\'m';
+            }
             
             // Chartni yangilash
             initChart();
@@ -448,13 +548,15 @@
             localStorage.setItem('currentMonth', currentMonth);
             localStorage.setItem('currentYear', currentYear);
         }
-        
+
         // Chiqimlarni yuklash va ko'rsatish
         function loadExpenses() {
             const expensesList = document.getElementById('expenses-list');
+            if (!expensesList) return;
+            
             const activeFilterBtn = document.querySelector('.filter-btn.active');
             const filter = activeFilterBtn ? activeFilterBtn.getAttribute('data-filter') : 'week';
-            const selectedCategory = categoryFilter.value;
+            const selectedCategory = categoryFilter ? categoryFilter.value : 'all';
             
             // Filtrlash
             let filteredTransactions = [...transactions].reverse(); // Eng yangisi birinchi
@@ -537,7 +639,7 @@
                 });
             });
         }
-        
+
         // Operatsiyani tahrirlash
         function editTransaction(id) {
             const transaction = transactions.find(t => t.id === id);
@@ -552,7 +654,7 @@
             editingTransactionId = id;
             editModal.style.display = 'flex';
         }
-        
+
         // Operatsiyani o'chirish
         function deleteTransaction(id) {
             if (!confirm('Bu operatsiyani o\'chirishni istaysizmi?')) return;
@@ -577,9 +679,9 @@
             loadExpenses();
             showNotification('Operatsiya muvaffaqiyatli o\'chirildi!');
         }
-        
+
         // Yangi operatsiya qo'shish
-        addButton.addEventListener('click', () => {
+        function addTransaction() {
             const amount = document.getElementById('amount').value;
             const reason = document.getElementById('reason').value;
             const category = document.getElementById('category').value;
@@ -617,10 +719,10 @@
             // Formani tozalash
             document.getElementById('amount').value = '';
             document.getElementById('reason').value = '';
-        });
-        
+        }
+
         // Chartni 0 ga tushirish
-        resetChartBtn.addEventListener('click', () => {
+        function resetChart() {
             if (!confirm('Chartni 0 ga tushirishni istaysizmi? Bu faqat joriy oy ma\'lumotlarini tozalaydi.')) return;
             
             // Faqat joriy oy operatsiyalarini o'chirish
@@ -637,10 +739,10 @@
             
             updateBalanceAndStats();
             showNotification('Chart muvaffaqiyatli 0 ga tushirildi!');
-        });
-        
+        }
+
         // Yangi oy boshlash
-        resetMonthBtn.addEventListener('click', () => {
+        function resetMonth() {
             if (!confirm('Yangi oy boshlashni istaysizmi? Joriy oy ma\'lumotlari saqlanib qoladi.')) return;
             
             // Oyni yangilash
@@ -650,10 +752,10 @@
             
             updateBalanceAndStats();
             showNotification('Yangi oy muvaffaqiyatli boshlandi!');
-        });
-        
+        }
+
         // Barchasini tozalash
-        resetAllBtn.addEventListener('click', () => {
+        function resetAll() {
             if (!confirm('Barcha ma\'lumotlarni tozalashni istaysizmi? Bu amalni bekor qilib bo\'lmaydi.')) return;
             
             transactions = [];
@@ -664,52 +766,227 @@
             updateBalanceAndStats();
             loadExpenses();
             showNotification('Barcha ma\'lumotlar tozalandi!');
-        });
-        
-        // Telegram orqali ma'lumotlarni yuklab olish
-        downloadTelegramBtn.addEventListener('click', () => {
+        }
+
+        // Ma'lumotlarni nusxalash
+        function copyData() {
+            if (transactions.length === 0) {
+                showNotification('Nusxalash uchun ma\'lumot yo\'q!', false);
+                return;
+            }
+            
+            try {
+                const textContent = generateTXT();
+                
+                // Nusxalash
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(textContent).then(() => {
+                        showNotification('✅ Ma\'lumotlar nusxalandi! Endi xabarga joylashtirishingiz mumkin');
+                    }).catch(err => {
+                        fallbackCopy(textContent);
+                    });
+                } else {
+                    fallbackCopy(textContent);
+                }
+                
+            } catch (error) {
+                showNotification('Xatolik yuz berdi: ' + error.message, false);
+            }
+        }
+
+        // Ma'lumotlarni yuklab olish
+        function downloadData() {
             if (transactions.length === 0) {
                 showNotification('Yuklab olish uchun ma\'lumot yo\'q!', false);
                 return;
             }
             
             try {
-                // Ma'lumotlarni matn shaklida tayyorlash
-                let textContent = "Mening Budjet Ma'lumotlarim\n\n";
-                textContent += `Jami balans: ${balance.toLocaleString()} so'm\n`;
-                textContent += `Jami operatsiyalar: ${transactions.length} ta\n\n`;
+                const fileFormat = fileFormatSelect.value;
+                let content, filename, mimeType;
                 
-                // Operatsiyalarni qo'shish
-                transactions.forEach((t, index) => {
-                    const typeText = t.type === 'chiqim' ? 'Chiqim' : 'Kirim';
-                    const date = new Date(t.date).toLocaleDateString('uz-UZ');
-                    textContent += `${index + 1}. ${date} - ${t.reason} - ${parseInt(t.amount).toLocaleString()} so'm (${typeText})\n`;
-                });
-                
-                // Telegram WebApp orqali yuborish
-                if (typeof Telegram !== 'undefined') {
-                    const tg = window.Telegram.WebApp;
-                    
-                    // Ma'lumotlarni foydalanuvchiga yuborish
-                    tg.sendData(textContent);
-                    showNotification('Ma\'lumotlar Telegramga yuborildi!');
-                } else {
-                    // Agar Telegram emas, boshqa brauzerda ishlayotgan bo'lsa
-                    const blob = new Blob([textContent], { type: 'text/plain' });
-                    const url = URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = `budjet_ma'lumotlari_${new Date().toISOString().slice(0, 10)}.txt`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    showNotification('Ma\'lumotlar fayl sifatida yuklab olindi!');
+                switch(fileFormat) {
+                    case 'csv':
+                        content = generateCSV();
+                        filename = `budjet_ma'lumotlari_${new Date().toISOString().slice(0, 10)}.csv`;
+                        mimeType = 'text/csv;charset=utf-8;';
+                        break;
+                    case 'json':
+                        content = generateJSON();
+                        filename = `budjet_ma'lumotlari_${new Date().toISOString().slice(0, 10)}.json`;
+                        mimeType = 'application/json;charset=utf-8;';
+                        break;
+                    case 'txt':
+                    default:
+                        content = generateTXT();
+                        filename = `budjet_ma'lumotlari_${new Date().toISOString().slice(0, 10)}.txt`;
+                        mimeType = 'text/plain;charset=utf-8;';
                 }
+                
+                downloadFile(content, filename, mimeType);
+                showNotification(`✅ Ma'lumotlar ${fileFormat.toUpperCase()} formatida yuklab olindi!`);
+                
             } catch (error) {
                 showNotification('Xatolik yuz berdi: ' + error.message, false);
             }
-        });
-        
+        }
+
+        // CSV formatida ma'lumot yaratish
+        function generateCSV() {
+            let csv = 'Sana,Sabab,Summa,Tur,Kategoriya\n';
+            
+            // Operatsiyalarni sanasi bo'yicha tartiblash (eng yangisi birinchi)
+            const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            sortedTransactions.forEach(transaction => {
+                const date = new Date(transaction.date).toLocaleDateString('uz-UZ');
+                const typeText = transaction.type === 'chiqim' ? 'Chiqim' : 'Kirim';
+                const categoryText = getCategoryText(transaction.category);
+                
+                // CSV formatida qator yaratish (vergul bilan ajratilgan)
+                csv += `"${date}","${transaction.reason}","${transaction.amount}","${typeText}","${categoryText}"\n`;
+            });
+            
+            return csv;
+        }
+
+        // JSON formatida ma'lumot yaratish
+        function generateJSON() {
+            const data = {
+                exportDate: new Date().toISOString(),
+                balance: balance,
+                currentMonth: currentMonth,
+                currentYear: currentYear,
+                transactions: transactions
+            };
+            
+            return JSON.stringify(data, null, 2);
+        }
+
+        // TXT formatida ma'lumot yaratish
+        function generateTXT() {
+            let textContent = "📊 Mening Budjet Ma'lumotlarim\n\n";
+            textContent += "=".repeat(40) + "\n\n";
+            
+            // Umumiy statistikalar
+            textContent += "📈 Umumiy Statistikalar:\n";
+            textContent += `💰 Jami balans: ${balance.toLocaleString()} so'm\n`;
+            textContent += `📝 Jami operatsiyalar: ${transactions.length} ta\n\n`;
+            
+            // Kirim/chiqim statistikasi
+            const totalIncome = transactions
+                .filter(t => t.type === 'kirim')
+                .reduce((sum, t) => sum + parseInt(t.amount), 0);
+                
+            const totalExpense = transactions
+                .filter(t => t.type === 'chiqim')
+                .reduce((sum, t) => sum + parseInt(t.amount), 0);
+            
+            textContent += `⬆️ Jami kirim: ${totalIncome.toLocaleString()} so'm\n`;
+            textContent += `⬇️ Jami chiqim: ${totalExpense.toLocaleString()} so'm\n\n`;
+            
+            // Kategoriyalar bo'yicha chiqimlar
+            textContent += "📂 Kategoriyalar bo'yicha chiqimlar:\n";
+            const categories = {};
+            transactions
+                .filter(t => t.type === 'chiqim')
+                .forEach(t => {
+                    categories[t.category] = (categories[t.category] || 0) + parseInt(t.amount);
+                });
+            
+            Object.entries(categories).forEach(([category, amount]) => {
+                textContent += `  • ${getCategoryText(category)}: ${amount.toLocaleString()} so'm\n`;
+            });
+            textContent += "\n";
+            
+            // Barcha operatsiyalar
+            textContent += "📋 Barcha Operatsiyalar:\n";
+            textContent += "-".repeat(40) + "\n";
+            
+            // Operatsiyalarni sanasi bo'yicha tartiblash (eng yangisi birinchi)
+            const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            sortedTransactions.forEach((transaction, index) => {
+                const typeText = transaction.type === 'chiqim' ? '⬇️ Chiqim' : '⬆️ Kirim';
+                const date = new Date(transaction.date).toLocaleDateString('uz-UZ');
+                const categoryText = getCategoryText(transaction.category);
+                
+                textContent += `${index + 1}. ${date} - ${transaction.reason}\n`;
+                textContent += `   ${typeText}: ${parseInt(transaction.amount).toLocaleString()} so'm (${categoryText})\n\n`;
+            });
+            
+            return textContent;
+        }
+
+        // Faylni yuklab olish
+        function downloadFile(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // Qo'shimcha nusxalash usuli
+        function fallbackCopy(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showNotification('✅ Ma\'lumotlar nusxalandi! Endi xabarga joylashtirishingiz mumkin');
+            } catch (err) {
+                showNotification('❌ Nusxalash muvaffaqiyatsiz. Qo\'lda nusxalab oling', false);
+                // Agar nusxalash ishlamasa, matnni ko'rsatish
+                showTextModal(text);
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        // Matnni modalda ko'rsatish (agar nusxalash ishlamasa)
+        function showTextModal(text) {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                background: rgba(0,0,0,0.8); z-index: 10000; display: flex; 
+                align-items: center; justify-content: center; padding: 20px;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: white; padding: 20px; border-radius: 10px; max-width: 500px; width: 100%; max-height: 80vh; overflow: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="margin: 0;">Ma'lumotlaringiz</h3>
+                        <button onclick="this.parentElement.parentElement.parentElement.remove()" style="background: none; border: none; font-size: 20px; cursor: pointer;">×</button>
+                    </div>
+                    <pre style="white-space: pre-wrap; font-family: system-ui; background: #f5f5f5; padding: 15px; border-radius: 5px; max-height: 60vh; overflow: auto;">${text}</pre>
+                    <button onclick="navigator.clipboard.writeText('${text.replace(/'/g, "\\'")}').then(() => alert('Nusxalandi!')).catch(() => alert('Xatolik!'));" 
+                            style="width: 100%; padding: 10px; background: #0088cc; color: white; border: none; border-radius: 5px; margin-top: 10px;">
+                        Nusxa olish
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Modalni yopish
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
+
         // Kategoriya matnini olish
         function getCategoryText(category) {
             switch(category) {
@@ -721,21 +998,9 @@
                 default: return category;
             }
         }
-        
-        // Modalni yopish
-        closeModalBtn.addEventListener('click', () => {
-            editModal.style.display = 'none';
-        });
-        
-        // Modal tashqarisiga bosganda yopish
-        window.addEventListener('click', (e) => {
-            if (e.target === editModal) {
-                editModal.style.display = 'none';
-            }
-        });
-        
+
         // Tahrirlangan operatsiyani saqlash
-        saveEditBtn.addEventListener('click', () => {
+        function saveEdit() {
             const amount = document.getElementById('edit-amount').value;
             const reason = document.getElementById('edit-reason').value;
             const category = document.getElementById('edit-category').value;
@@ -779,37 +1044,7 @@
             loadExpenses();
             editModal.style.display = 'none';
             showNotification('Operatsiya muvaffaqiyatli tahrirlandi!');
-        });
-        
-        // Dastur ishga tushganda
-        document.addEventListener('DOMContentLoaded', () => {
-            // Telegram WebApp ni ishga tushirish
-            if (typeof Telegram !== 'undefined') {
-                let tg = window.Telegram.WebApp;
-                tg.expand();
-                tg.MainButton.setText("Yopish").onClick(() => tg.close()).show();
-                
-                // Foydalanuvchi ma'lumotlarini olish
-                const user = tg.initDataUnsafe.user;
-                if (user && user.id !== 1034121198) {
-                    document.body.innerHTML = `
-                        <div style="display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column; padding: 20px; text-align: center;">
-                            <h2 style="color: #dc3545;">Ruxsat yo'q</h2>
-                            <p>Ushbu ilova faqat @Axrorbek_o6 uchun mo'ljallangan</p>
-                        </div>
-                    `;
-                    return;
-                }
-            }
-            
-            // Dasturiy ma'lumotlarni yuklash
-            updateBalanceAndStats();
-            
-            // Agar tarix sahifasida bo'lsa, operatsiyalarni yuklash
-            if (document.getElementById('history-tab').classList.contains('active')) {
-                loadExpenses();
-            }
-        });
+        }
     </script>
 </body>
 </html>
