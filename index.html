@@ -76,6 +76,16 @@
         .download-buttons { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 10px; }
         .download-options { display: flex; gap: 10px; margin-bottom: 10px; }
         .download-options select { flex: 1; }
+        
+        /* Kategoriyalarni boshqarish uchun yangi stillar */
+        .categories-section { margin-top: 20px; }
+        .category-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid #eee; }
+        .category-item:last-child { border-bottom: none; }
+        .category-name { font-weight: 500; }
+        .category-actions { display: flex; gap: 8px; }
+        .category-action-btn { padding: 6px 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        .add-category-form { margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; }
+        
         @media (max-width: 480px) {
             .container { padding: 10px; }
             .header { padding: 15px 0; }
@@ -139,11 +149,7 @@
                     <button class="filter-btn" data-filter="month">Oxirgi oy</button>
                     <select id="category-filter" class="filter-select">
                         <option value="all">Barchasi</option>
-                        <option value="uy">UY</option>
-                        <option value="kv">Kvartira</option>
-                        <option value="ov">Oziq-ovqat</option>
-                        <option value="ozm">Ozm</option>
-                        <option value="boshqa">Boshqa</option>
+                        <!-- Kategoriyalar dinamik ravishda yuklanadi -->
                     </select>
                 </div>
                 
@@ -172,11 +178,7 @@
                 <div class="form-group">
                     <label class="form-label">Kategoriya</label>
                     <select id="category" class="form-select">
-                        <option value="uy">UY</option>
-                        <option value="kv">Kvartira</option>
-                        <option value="ov">Oziq-ovqat</option>
-                        <option value="ozm">Ozm</option>
-                        <option value="boshqa">Boshqa</option>
+                        <!-- Kategoriyalar dinamik ravishda yuklanadi -->
                     </select>
                 </div>
                 
@@ -204,6 +206,25 @@
                     <button class="btn btn-danger" id="reset-all">Barchasini tozalash</button>
                 </div>
                 
+                <!-- Kategoriyalarni boshqarish bo'limi -->
+                <div class="categories-section">
+                    <div class="section-title">
+                        <span>Kategoriyalarni boshqarish</span>
+                    </div>
+                    
+                    <div id="categories-list" class="loading">
+                        Kategoriyalar yuklanmoqda...
+                    </div>
+                    
+                    <div class="add-category-form">
+                        <div class="form-group">
+                            <label class="form-label">Yangi kategoriya nomi</label>
+                            <input type="text" id="new-category-name" class="form-input" placeholder="Kategoriya nomi">
+                        </div>
+                        <button class="btn btn-success" id="add-category">Kategoriya qo'shish</button>
+                    </div>
+                </div>
+                
                 <div class="download-section">
                     <div class="section-title">
                         <span>Ma'lumotlarni yuklab olish</span>
@@ -226,7 +247,7 @@
         </div>
     </div>
 
-    <!-- Tahrirlash modali -->
+    <!-- Operatsiyani tahrirlash modali -->
     <div id="edit-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -244,11 +265,7 @@
             <div class="form-group">
                 <label class="form-label">Kategoriya</label>
                 <select id="edit-category" class="form-select">
-                    <option value="uy">UY</option>
-                    <option value="kv">Kvartira</option>
-                    <option value="ov">Oziq-ovqat</option>
-                    <option value="ozm">Ozm</option>
-                    <option value="boshqa">Boshqa</option>
+                    <!-- Kategoriyalar dinamik ravishda yuklanadi -->
                 </select>
             </div>
             <div class="form-group">
@@ -262,6 +279,21 @@
         </div>
     </div>
 
+    <!-- Kategoriyani tahrirlash modali -->
+    <div id="edit-category-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Kategoriyani tahrirlash</div>
+                <button class="close-modal" id="close-edit-category-modal">&times;</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Kategoriya nomi</label>
+                <input type="text" id="edit-category-name" class="form-input">
+            </div>
+            <button class="btn btn-primary" id="save-category-edit">Saqlash</button>
+        </div>
+    </div>
+
     <div id="notification" class="notification">
         <span id="notification-message"></span>
     </div>
@@ -272,6 +304,11 @@
         let resetChartBtn, resetMonthBtn, resetAllBtn, copyDataBtn, downloadBtn;
         let editModal, closeModalBtn, saveEditBtn;
         let categoryFilter, fileFormatSelect;
+        
+        // Kategoriyalarni boshqarish uchun yangi elementlar
+        let categoriesList, addCategoryBtn, newCategoryNameInput;
+        let editCategoryModal, closeEditCategoryModalBtn, saveCategoryEditBtn, editCategoryNameInput;
+        let editingCategoryId = null;
 
         // Ma'lumotlarni saqlash
         let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
@@ -279,6 +316,15 @@
         let currentMonth = localStorage.getItem('currentMonth') || new Date().getMonth();
         let currentYear = localStorage.getItem('currentYear') || new Date().getFullYear();
         let editingTransactionId = null;
+        
+        // Kategoriyalarni saqlash
+        let categories = JSON.parse(localStorage.getItem('categories')) || [
+            { id: 1, name: 'UY', value: 'uy' },
+            { id: 2, name: 'Kvartira', value: 'kv' },
+            { id: 3, name: 'Oziq-ovqat', value: 'ov' },
+            { id: 4, name: 'Ozm', value: 'ozm' },
+            { id: 5, name: 'Boshqa', value: 'boshqa' }
+        ];
 
         // Dastur ishga tushganda
         document.addEventListener('DOMContentLoaded', function() {
@@ -303,6 +349,9 @@
                     return;
                 }
             }
+            
+            // Kategoriyalar ro'yxatini yangilash
+            updateCategoriesUI();
             
             // Event listenerlarni qo'shish
             setupEventListeners();
@@ -337,6 +386,17 @@
             
             // Fayl formati selector
             fileFormatSelect = document.getElementById('file-format');
+            
+            // Kategoriyalarni boshqarish elementlari
+            categoriesList = document.getElementById('categories-list');
+            addCategoryBtn = document.getElementById('add-category');
+            newCategoryNameInput = document.getElementById('new-category-name');
+            
+            // Kategoriyani tahrirlash modali
+            editCategoryModal = document.getElementById('edit-category-modal');
+            closeEditCategoryModalBtn = document.getElementById('close-edit-category-modal');
+            saveCategoryEditBtn = document.getElementById('save-category-edit');
+            editCategoryNameInput = document.getElementById('edit-category-name');
         }
 
         // Event listenerlarni sozlash
@@ -354,6 +414,8 @@
                     
                     if (tabId === 'history') {
                         loadExpenses();
+                    } else if (tabId === 'manage') {
+                        loadCategories();
                     }
                 });
             });
@@ -393,15 +455,29 @@
                 editModal.style.display = 'none';
             });
             
+            // Kategoriya tahrirlash modalini yopish
+            closeEditCategoryModalBtn.addEventListener('click', () => {
+                editCategoryModal.style.display = 'none';
+            });
+            
             // Modal tashqarisiga bosganda yopish
             window.addEventListener('click', (e) => {
                 if (e.target === editModal) {
                     editModal.style.display = 'none';
                 }
+                if (e.target === editCategoryModal) {
+                    editCategoryModal.style.display = 'none';
+                }
             });
             
             // Tahrirlangan operatsiyani saqlash
             saveEditBtn.addEventListener('click', saveEdit);
+            
+            // Kategoriya qo'shish
+            addCategoryBtn.addEventListener('click', addCategory);
+            
+            // Kategoriyani tahrirlashni saqlash
+            saveCategoryEditBtn.addEventListener('click', saveCategoryEdit);
         }
 
         // Xabar ko'rsatish funksiyasi
@@ -415,6 +491,184 @@
             setTimeout(() => {
                 notification.classList.remove('show');
             }, 3000);
+        }
+
+        // Kategoriyalar UI ni yangilash
+        function updateCategoriesUI() {
+            // "Qo'shish" bo'limidagi kategoriya selectorini yangilash
+            const categorySelect = document.getElementById('category');
+            if (categorySelect) {
+                categorySelect.innerHTML = '';
+                categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category.value;
+                    option.textContent = category.name;
+                    categorySelect.appendChild(option);
+                });
+            }
+            
+            // "Tarix" bo'limidagi kategoriya filterini yangilash
+            if (categoryFilter) {
+                categoryFilter.innerHTML = '<option value="all">Barchasi</option>';
+                categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category.value;
+                    option.textContent = category.name;
+                    categoryFilter.appendChild(option);
+                });
+            }
+            
+            // Tahrirlash modalidagi kategoriya selectorini yangilash
+            const editCategorySelect = document.getElementById('edit-category');
+            if (editCategorySelect) {
+                editCategorySelect.innerHTML = '';
+                categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category.value;
+                    option.textContent = category.name;
+                    editCategorySelect.appendChild(option);
+                });
+            }
+            
+            // Kategoriyalarni localStorage ga saqlash
+            localStorage.setItem('categories', JSON.stringify(categories));
+        }
+
+        // Kategoriyalarni yuklash va ko'rsatish
+        function loadCategories() {
+            if (!categoriesList) return;
+            
+            if (categories.length === 0) {
+                categoriesList.innerHTML = '<div class="loading">Hech qanday kategoriya topilmadi</div>';
+                return;
+            }
+            
+            let html = '';
+            categories.forEach(category => {
+                // Kategoriyani operatsiyalarda ishlatilganligini tekshirish
+                const isUsed = transactions.some(t => t.category === category.value);
+                
+                html += `
+                    <div class="category-item">
+                        <div class="category-name">${category.name}</div>
+                        <div class="category-actions">
+                            <button class="category-action-btn edit-btn" data-id="${category.id}">Tahrir</button>
+                            <button class="category-action-btn delete-btn" data-id="${category.id}" ${isUsed ? 'disabled' : ''}>O'chir</button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            categoriesList.innerHTML = html;
+            
+            // Kategoriyalarni tahrirlash va o'chirish tugmalariga event listener qo'shish
+            document.querySelectorAll('.category-actions .edit-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(e.target.getAttribute('data-id'));
+                    editCategory(id);
+                });
+            });
+            
+            document.querySelectorAll('.category-actions .delete-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    if (e.target.disabled) {
+                        showNotification('Bu kategoriyani o\'chirib bo\'lmaydi, chunki u operatsiyalarda ishlatilgan!', false);
+                        return;
+                    }
+                    const id = parseInt(e.target.getAttribute('data-id'));
+                    deleteCategory(id);
+                });
+            });
+        }
+
+        // Kategoriya qo'shish
+        function addCategory() {
+            const name = newCategoryNameInput.value.trim();
+            
+            if (!name) {
+                showNotification('Iltimos, kategoriya nomini kiriting!', false);
+                return;
+            }
+            
+            // Kategoriya nomi unikal bo'lishi kerak
+            if (categories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+                showNotification('Bu nom bilan kategoriya allaqachon mavjud!', false);
+                return;
+            }
+            
+            // Yangi kategoriya yaratish
+            const newCategory = {
+                id: Date.now(),
+                name: name,
+                value: name.toLowerCase().replace(/\s+/g, '-')
+            };
+            
+            // Kategoriyani qo'shish
+            categories.push(newCategory);
+            
+            // UI ni yangilash
+            updateCategoriesUI();
+            loadCategories();
+            showNotification('Kategoriya muvaffaqiyatli qo\'shildi!');
+            
+            // Formani tozalash
+            newCategoryNameInput.value = '';
+        }
+
+        // Kategoriyani tahrirlash
+        function editCategory(id) {
+            const category = categories.find(c => c.id === id);
+            if (!category) return;
+            
+            // Modalni to'ldirish
+            editCategoryNameInput.value = category.name;
+            editingCategoryId = id;
+            editCategoryModal.style.display = 'flex';
+        }
+
+        // Kategoriyani o'chirish
+        function deleteCategory(id) {
+            if (!confirm('Bu kategoriyani o\'chirishni istaysizmi?')) return;
+            
+            const categoryIndex = categories.findIndex(c => c.id === id);
+            if (categoryIndex === -1) return;
+            
+            // Kategoriyani o'chirish
+            categories.splice(categoryIndex, 1);
+            
+            // UI ni yangilash
+            updateCategoriesUI();
+            loadCategories();
+            showNotification('Kategoriya muvaffaqiyatli o\'chirildi!');
+        }
+
+        // Tahrirlangan kategoriyani saqlash
+        function saveCategoryEdit() {
+            const name = editCategoryNameInput.value.trim();
+            
+            if (!name) {
+                showNotification('Iltimos, kategoriya nomini kiriting!', false);
+                return;
+            }
+            
+            // Kategoriya nomi unikal bo'lishi kerak (o'zidan boshqa)
+            if (categories.some(c => c.name.toLowerCase() === name.toLowerCase() && c.id !== editingCategoryId)) {
+                showNotification('Bu nom bilan kategoriya allaqachon mavjud!', false);
+                return;
+            }
+            
+            const categoryIndex = categories.findIndex(c => c.id === editingCategoryId);
+            if (categoryIndex === -1) return;
+            
+            // Kategoriyani yangilash
+            categories[categoryIndex].name = name;
+            categories[categoryIndex].value = name.toLowerCase().replace(/\s+/g, '-');
+            
+            // UI ni yangilash
+            updateCategoriesUI();
+            loadCategories();
+            editCategoryModal.style.display = 'none';
+            showNotification('Kategoriya muvaffaqiyatli tahrirlandi!');
         }
 
         // Chart yaratish
@@ -435,37 +689,32 @@
             });
             
             // Kategoriyalar bo'yicha chiqimlarni hisoblash
-            const categories = {
-                'uy': 0,
-                'kv': 0,
-                'ov': 0,
-                'ozm': 0,
-                'boshqa': 0
-            };
+            const categoryTotals = {};
             
+            // Barcha kategoriyalar uchun 0 qiymatini belgilash
+            categories.forEach(category => {
+                categoryTotals[category.value] = 0;
+            });
+            
+            // Chiqimlarni hisoblash
             currentMonthTransactions.filter(t => t.type === 'chiqim').forEach(transaction => {
-                if (categories.hasOwnProperty(transaction.category)) {
-                    categories[transaction.category] += parseInt(transaction.amount);
+                if (categoryTotals.hasOwnProperty(transaction.category)) {
+                    categoryTotals[transaction.category] += parseInt(transaction.amount);
                 }
             });
             
             // Faqat 0 dan katta bo'lgan kategoriyalarni ko'rsatish
             const labels = [];
             const data = [];
-            const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'];
+            const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#8AC926', '#1982C4', '#6A4C93'];
             
-            Object.entries(categories).forEach(([key, value], index) => {
+            Object.entries(categoryTotals).forEach(([key, value], index) => {
                 if (value > 0) {
-                    let label = '';
-                    switch(key) {
-                        case 'uy': label = 'UY'; break;
-                        case 'kv': label = 'Kvartira'; break;
-                        case 'ov': label = 'Oziq-ovqat'; break;
-                        case 'ozm': label = 'Ozm'; break;
-                        case 'boshqa': label = 'Boshqa'; break;
+                    const category = categories.find(c => c.value === key);
+                    if (category) {
+                        labels.push(category.name);
+                        data.push(value);
                     }
-                    labels.push(label);
-                    data.push(value);
                 }
             });
             
@@ -593,14 +842,9 @@
                 const amountClass = transaction.type === 'kirim' ? 'expense-income' : 'expense-outcome';
                 const amountSign = transaction.type === 'kirim' ? '+' : '-';
                 
-                let categoryText = '';
-                switch(transaction.category) {
-                    case 'uy': categoryText = 'UY'; break;
-                    case 'kv': categoryText = 'Kvartira'; break;
-                    case 'ov': categoryText = 'Oziq-ovqat'; break;
-                    case 'ozm': categoryText = 'Ozm'; break;
-                    case 'boshqa': categoryText = 'Boshqa'; break;
-                }
+                // Kategoriya nomini topish
+                const category = categories.find(c => c.value === transaction.category);
+                const categoryText = category ? category.name : transaction.category;
                 
                 html += `
                     <div class="expense-item">
@@ -841,7 +1085,10 @@
             sortedTransactions.forEach(transaction => {
                 const date = new Date(transaction.date).toLocaleDateString('uz-UZ');
                 const typeText = transaction.type === 'chiqim' ? 'Chiqim' : 'Kirim';
-                const categoryText = getCategoryText(transaction.category);
+                
+                // Kategoriya nomini topish
+                const category = categories.find(c => c.value === transaction.category);
+                const categoryText = category ? category.name : transaction.category;
                 
                 // CSV formatida qator yaratish (vergul bilan ajratilgan)
                 csv += `"${date}","${transaction.reason}","${transaction.amount}","${typeText}","${categoryText}"\n`;
@@ -857,6 +1104,7 @@
                 balance: balance,
                 currentMonth: currentMonth,
                 currentYear: currentYear,
+                categories: categories,
                 transactions: transactions
             };
             
@@ -887,15 +1135,17 @@
             
             // Kategoriyalar bo'yicha chiqimlar
             textContent += "📂 Kategoriyalar bo'yicha chiqimlar:\n";
-            const categories = {};
+            const categoryTotals = {};
             transactions
                 .filter(t => t.type === 'chiqim')
                 .forEach(t => {
-                    categories[t.category] = (categories[t.category] || 0) + parseInt(t.amount);
+                    categoryTotals[t.category] = (categoryTotals[t.category] || 0) + parseInt(t.amount);
                 });
             
-            Object.entries(categories).forEach(([category, amount]) => {
-                textContent += `  • ${getCategoryText(category)}: ${amount.toLocaleString()} so'm\n`;
+            Object.entries(categoryTotals).forEach(([categoryValue, amount]) => {
+                const category = categories.find(c => c.value === categoryValue);
+                const categoryName = category ? category.name : categoryValue;
+                textContent += `  • ${categoryName}: ${amount.toLocaleString()} so'm\n`;
             });
             textContent += "\n";
             
@@ -909,7 +1159,10 @@
             sortedTransactions.forEach((transaction, index) => {
                 const typeText = transaction.type === 'chiqim' ? '⬇️ Chiqim' : '⬆️ Kirim';
                 const date = new Date(transaction.date).toLocaleDateString('uz-UZ');
-                const categoryText = getCategoryText(transaction.category);
+                
+                // Kategoriya nomini topish
+                const category = categories.find(c => c.value === transaction.category);
+                const categoryText = category ? category.name : transaction.category;
                 
                 textContent += `${index + 1}. ${date} - ${transaction.reason}\n`;
                 textContent += `   ${typeText}: ${parseInt(transaction.amount).toLocaleString()} so'm (${categoryText})\n\n`;
@@ -985,18 +1238,6 @@
                     modal.remove();
                 }
             });
-        }
-
-        // Kategoriya matnini olish
-        function getCategoryText(category) {
-            switch(category) {
-                case 'uy': return 'UY';
-                case 'kv': return 'Kvartira';
-                case 'ov': return 'Oziq-ovqat';
-                case 'ozm': return 'Ozm';
-                case 'boshqa': return 'Boshqa';
-                default: return category;
-            }
         }
 
         // Tahrirlangan operatsiyani saqlash
