@@ -4,1288 +4,1431 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mening Shaxsiy Budjetim</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        /* Asosiy CSS kodlari o'zgarmagan (qisqartirilgan) */
-        :root { --primary: #0088cc; --secondary: #6c757d; --success: #28a745; --danger: #dc3545; --light: #f8f9fa; --dark: #343a40; }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); color: #333; line-height: 1.6; min-height: 100vh; padding: 0; margin: 0; }
-        .container { max-width: 100%; padding: 15px; margin: 0 auto; }
-        .header { text-align: center; padding: 20px 0; background: linear-gradient(135deg, var(--primary), #0056b3); color: white; border-radius: 0 0 20px 20px; margin-bottom: 25px; box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3); }
-        .header h1 { font-size: 24px; margin-bottom: 5px; }
-        .header p { opacity: 0.9; font-size: 14px; }
-        .card { background: white; padding: 20px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); }
-        .balance-card { text-align: center; background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%); color: white; }
-        .balance-label { font-size: 14px; opacity: 0.9; margin-bottom: 5px; }
-        .balance-amount { font-size: 32px; font-weight: bold; margin: 10px 0; }
-        .stats-cards { display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 20px; }
-        .stat-card { text-align: center; padding: 15px; }
-        .stat-label { font-size: 13px; color: var(--secondary); margin-bottom: 5px; }
-        .stat-value { font-size: 24px; font-weight: bold; }
-        .stat-value.income { color: var(--success); }
-        .stat-value.expense { color: var(--danger); }
-        .chart-container { position: relative; height: 250px; margin-bottom: 20px; }
-        .tabs { display: flex; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08); margin-bottom: 20px; }
-        .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-weight: 500; transition: background 0.3s ease; }
-        .tab.active { background-color: var(--primary); color: white; }
-        .form-group { margin-bottom: 18px; }
-        .form-label { display: block; margin-bottom: 6px; font-weight: 500; color: var(--dark); }
-        .form-input { width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; transition: border-color 0.3s ease; }
-        .form-input:focus { outline: none; border-color: var(--primary); }
-        .form-select { width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: 10px; background-color: white; font-size: 16px; }
-        .btn { display: block; width: 100%; padding: 16px; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; text-align: center; transition: background 0.3s ease; }
-        .btn-primary { background-color: var(--primary); color: white; }
-        .btn-success { background-color: var(--success); color: white; }
-        .btn-danger { background-color: var(--danger); color: white; }
-        .btn-warning { background-color: #ffc107; color: black; }
-        .history-section { margin-bottom: 20px; }
-        .section-title { font-size: 18px; margin-bottom: 15px; color: var(--dark); }
-        .filter-buttons { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
-        .filter-btn { flex: 1; padding: 10px; border: 1px solid var(--primary); background: white; color: var(--primary); border-radius: 8px; cursor: pointer; text-align: center; font-size: 14px; transition: all 0.3s ease; min-width: 80px; }
-        .filter-btn.active { background: var(--primary); color: white; }
-        .filter-select { padding: 10px; border: 1px solid var(--primary); border-radius: 8px; background: white; color: var(--primary); font-size: 14px; cursor: pointer; flex: 1; min-width: 150px; }
-        .expense-item { padding: 16px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-        .expense-item:last-child { border-bottom: none; }
-        .expense-info { flex: 1; }
-        .expense-title { font-weight: 500; margin-bottom: 4px; }
-        .expense-details { display: flex; align-items: center; font-size: 13px; color: var(--secondary); }
-        .expense-amount { font-weight: bold; font-size: 18px; }
-        .expense-income { color: var(--success); }
-        .expense-outcome { color: var(--danger); }
-        .expense-category { background: #f0f0f0; padding: 4px 10px; border-radius: 12px; font-size: 12px; margin-left: 8px; }
-        .expense-actions { display: flex; gap: 8px; margin-left: 10px; }
-        .action-btn { padding: 6px 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; }
-        .edit-btn { background: #ffc107; color: black; }
-        .delete-btn { background: #dc3545; color: white; }
-        .loading { text-align: center; padding: 30px; color: var(--secondary); }
-        .hidden { display: none; }
-        .notification { position: fixed; top: 20px; right: 20px; padding: 15px 20px; background: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15); transform: translateX(100%); transition: transform 0.3s ease; z-index: 1000; }
-        .notification.show { transform: translateX(0); }
-        .notification.success { border-left: 4px solid var(--success); }
-        .notification.error { border-left: 4px solid var(--danger); }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        .management-buttons { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 20px; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; }
-        .modal-content { background: white; padding: 20px; border-radius: 12px; width: 90%; max-width: 500px; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .modal-title { font-size: 18px; font-weight: bold; }
-        .close-modal { background: none; border: none; font-size: 24px; cursor: pointer; }
-        .download-section { margin-top: 20px; }
-        .download-buttons { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 10px; }
-        .download-options { display: flex; gap: 10px; margin-bottom: 10px; }
-        .download-options select { flex: 1; }
-        
-        /* Kategoriyalarni boshqarish uchun yangi stillar */
-        .categories-section { margin-top: 20px; }
-        .category-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid #eee; }
-        .category-item:last-child { border-bottom: none; }
-        .category-name { font-weight: 500; }
-        .category-actions { display: flex; gap: 8px; }
-        .category-action-btn { padding: 6px 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; }
-        .add-category-form { margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; }
-        
-        @media (max-width: 480px) {
-            .container { padding: 10px; }
-            .header { padding: 15px 0; }
-            .header h1 { font-size: 20px; }
-            .balance-amount { font-size: 28px; }
-            .stats-cards { grid-template-columns: 1fr; }
-            .card { padding: 15px; }
-            .management-buttons { grid-template-columns: 1fr; }
-            .download-buttons { grid-template-columns: 1fr; }
-            .filter-buttons { flex-direction: column; }
-            .filter-btn, .filter-select { min-width: 100%; }
-            .download-options { flex-direction: column; }
+        :root {
+            --bg: #0a0e1a;
+            --surface: #111827;
+            --surface2: #1a2234;
+            --border: rgba(255,255,255,0.07);
+            --accent: #00d4ff;
+            --accent2: #7c3aed;
+            --green: #10d48e;
+            --red: #ff4d6d;
+            --yellow: #fbbf24;
+            --text: #e2e8f0;
+            --muted: #64748b;
+            --card-glow: rgba(0, 212, 255, 0.06);
         }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Sora', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Background mesh */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 60% 40% at 20% 10%, rgba(124,58,237,0.12) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 50% at 80% 80%, rgba(0,212,255,0.08) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .app-wrapper {
+            max-width: 460px;
+            margin: 0 auto;
+            padding: 0 0 40px 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* HEADER */
+        .header {
+            padding: 28px 20px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-left h1 {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            color: #fff;
+        }
+
+        .header-left p {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 2px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .header-badge {
+            background: rgba(0,212,255,0.1);
+            border: 1px solid rgba(0,212,255,0.25);
+            color: var(--accent);
+            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 5px 10px;
+            border-radius: 20px;
+            letter-spacing: 0.5px;
+        }
+
+        /* TABS */
+        .tabs {
+            display: flex;
+            margin: 16px 16px 0;
+            background: var(--surface);
+            border-radius: 14px;
+            padding: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 9px 6px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--muted);
+            border-radius: 10px;
+            transition: all 0.25s ease;
+            letter-spacing: 0.2px;
+        }
+
+        .tab.active {
+            background: var(--surface2);
+            color: var(--accent);
+            box-shadow: 0 0 0 1px rgba(0,212,255,0.2);
+        }
+
+        /* CONTENT */
+        .content { padding: 16px; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* CARDS */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 14px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--card-glow);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .card:hover::before { opacity: 1; }
+
+        /* BALANCE CARD */
+        .balance-card {
+            background: linear-gradient(135deg, #0f1f3d 0%, #1a1035 50%, #0f2030 100%);
+            border: 1px solid rgba(0,212,255,0.15);
+            text-align: center;
+            padding: 28px 20px;
+        }
+
+        .balance-card::after {
+            content: '';
+            position: absolute;
+            top: -40px; right: -40px;
+            width: 140px; height: 140px;
+            background: radial-gradient(circle, rgba(0,212,255,0.15) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .balance-label {
+            font-size: 11px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-family: 'JetBrains Mono', monospace;
+            margin-bottom: 10px;
+        }
+
+        .balance-amount {
+            font-size: 36px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: -1.5px;
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+
+        .balance-amount span {
+            font-size: 18px;
+            color: var(--accent);
+            font-weight: 400;
+        }
+
+        .balance-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            color: var(--green);
+            background: rgba(16,212,142,0.1);
+            padding: 4px 10px;
+            border-radius: 20px;
+            margin-top: 8px;
+        }
+
+        /* STAT ROW */
+        .stat-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: 'JetBrains Mono', monospace;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .stat-value.income { color: var(--green); }
+        .stat-value.expense { color: var(--red); }
+
+        /* CHART */
+        .chart-container {
+            position: relative;
+            height: 220px;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: 'JetBrains Mono', monospace;
+            margin-bottom: 14px;
+        }
+
+        /* FILTER */
+        .filter-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 7px 14px;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--muted);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-family: 'Sora', sans-serif;
+            transition: all 0.2s;
+        }
+
+        .filter-btn.active {
+            border-color: rgba(0,212,255,0.4);
+            color: var(--accent);
+            background: rgba(0,212,255,0.08);
+        }
+
+        .filter-select {
+            padding: 7px 12px;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--text);
+            border-radius: 8px;
+            font-size: 12px;
+            font-family: 'Sora', sans-serif;
+            cursor: pointer;
+            flex: 1;
+            min-width: 130px;
+        }
+
+        /* TRANSACTION ITEMS */
+        .tx-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 13px 0;
+            border-bottom: 1px solid var(--border);
+            animation: fadeUp 0.3s ease;
+        }
+
+        .tx-item:last-child { border-bottom: none; }
+
+        .tx-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .tx-icon.income { background: rgba(16,212,142,0.12); }
+        .tx-icon.expense { background: rgba(255,77,109,0.12); }
+
+        .tx-info { flex: 1; min-width: 0; }
+
+        .tx-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .tx-meta {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 3px;
+        }
+
+        .tx-date {
+            font-size: 11px;
+            color: var(--muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .tx-cat {
+            font-size: 10px;
+            color: var(--accent);
+            background: rgba(0,212,255,0.1);
+            padding: 2px 7px;
+            border-radius: 4px;
+        }
+
+        .tx-right { text-align: right; flex-shrink: 0; }
+
+        .tx-amount {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .tx-amount.income { color: var(--green); }
+        .tx-amount.expense { color: var(--red); }
+
+        .tx-actions {
+            display: flex;
+            gap: 5px;
+            margin-top: 4px;
+        }
+
+        .action-btn {
+            padding: 3px 8px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 10px;
+            font-family: 'Sora', sans-serif;
+            transition: all 0.2s;
+        }
+
+        .edit-btn { background: rgba(251,191,36,0.15); color: var(--yellow); }
+        .delete-btn { background: rgba(255,77,109,0.15); color: var(--red); }
+        .edit-btn:hover { background: rgba(251,191,36,0.3); }
+        .delete-btn:hover { background: rgba(255,77,109,0.3); }
+
+        /* FORMS */
+        .form-group { margin-bottom: 14px; }
+
+        .form-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: 'JetBrains Mono', monospace;
+            margin-bottom: 7px;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 15px;
+            font-family: 'Sora', sans-serif;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: rgba(0,212,255,0.4);
+            box-shadow: 0 0 0 3px rgba(0,212,255,0.06);
+        }
+
+        .form-input::placeholder { color: var(--muted); }
+
+        /* TYPE TOGGLE */
+        .type-toggle {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .type-option {
+            padding: 11px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+            color: var(--muted);
+        }
+
+        .type-option[data-val="chiqim"].selected {
+            border-color: rgba(255,77,109,0.5);
+            background: rgba(255,77,109,0.1);
+            color: var(--red);
+        }
+
+        .type-option[data-val="kirim"].selected {
+            border-color: rgba(16,212,142,0.5);
+            background: rgba(16,212,142,0.1);
+            color: var(--green);
+        }
+
+        /* BUTTONS */
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Sora', sans-serif;
+            transition: all 0.2s;
+            letter-spacing: 0.3px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), #0099cc);
+            color: #000;
+            box-shadow: 0 4px 20px rgba(0,212,255,0.25);
+        }
+
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 25px rgba(0,212,255,0.35); }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--green), #0da86f);
+            color: #000;
+        }
+
+        .btn-danger {
+            background: rgba(255,77,109,0.1);
+            color: var(--red);
+            border: 1px solid rgba(255,77,109,0.25);
+        }
+
+        .btn-danger:hover { background: rgba(255,77,109,0.2); }
+
+        .btn-warning {
+            background: rgba(251,191,36,0.1);
+            color: var(--yellow);
+            border: 1px solid rgba(251,191,36,0.25);
+            margin-bottom: 8px;
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--accent);
+            border: 1px solid rgba(0,212,255,0.25);
+        }
+
+        .btn-outline:hover { background: rgba(0,212,255,0.05); }
+
+        .btn-sm { padding: 10px 14px; font-size: 13px; margin-bottom: 8px; }
+
+        /* MANAGEMENT */
+        .mgmt-grid { display: grid; gap: 8px; }
+
+        /* CATEGORY ITEMS */
+        .cat-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .cat-item:last-child { border-bottom: none; }
+
+        .cat-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .cat-actions { display: flex; gap: 6px; }
+
+        /* DOWNLOAD */
+        .dl-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.75);
+            z-index: 2000;
+            align-items: flex-end;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal.open { display: flex; animation: fadeIn 0.2s ease; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .modal-sheet {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px 20px 0 0;
+            padding: 20px;
+            width: 100%;
+            max-width: 460px;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .modal-close {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* NOTIFICATION */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 13px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 9999;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast.success { border-color: rgba(16,212,142,0.4); color: var(--green); }
+        .toast.error { border-color: rgba(255,77,109,0.4); color: var(--red); }
+
+        /* EMPTY STATE */
+        .empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.5; }
+
+        /* DIVIDER */
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 16px 0;
+        }
+
+        /* CLICKABLE CARD */
+        .clickable-card {
+            cursor: pointer;
+            transition: border-color 0.2s, transform 0.15s;
+        }
+        .clickable-card:hover {
+            border-color: rgba(0,212,255,0.35);
+            transform: translateY(-2px);
+        }
+        .clickable-card:active { transform: translateY(0); }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Mening Shaxsiy Budjetim</h1>
-            <p>@Axrorbek_o6 uchun maxsus</p>
+
+<div class="app-wrapper">
+    <div class="header">
+        <div class="header-left">
+            <h1>Shaxsiy Budjet</h1>
+            <p>@Axrorbek_o6</p>
         </div>
-        
-        <div class="tabs">
-            <div class="tab active" data-tab="main">Asosiy</div>
-            <div class="tab" data-tab="history">Tarix</div>
-            <div class="tab" data-tab="add">Qo'shish</div>
-            <div class="tab" data-tab="manage">Boshqarish</div>
-        </div>
-        
+        <div class="header-badge" id="month-badge">— —</div>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" data-tab="main">Asosiy</div>
+        <div class="tab" data-tab="history">Tarix</div>
+        <div class="tab" data-tab="add">＋ Qo'sh</div>
+        <div class="tab" data-tab="manage">Sozlama</div>
+    </div>
+
+    <div class="content">
+
+        <!-- MAIN TAB -->
         <div id="main-tab" class="tab-content active">
             <div class="balance-card card">
-                <div class="balance-label">Joriy balans</div>
-                <div class="balance-amount" id="current-balance">0 so'm</div>
-            </div>
-            
-            <div class="stats-cards">
-                <div class="stat-card card">
-                    <div class="stat-label">Oylik chiqim</div>
-                    <div class="stat-value expense" id="monthly-expense">0 so'm</div>
+                <div class="balance-label">Joriy Balans</div>
+                <div class="balance-amount" id="current-balance">0 <span>so'm</span></div>
+                <div class="balance-indicator" id="balance-indicator">
+                    <span>●</span> <span id="balance-status">Hisob</span>
                 </div>
             </div>
-            
+
+            <div class="stat-row">
+                <div class="stat-card clickable-card" id="go-history-btn">
+                    <div class="stat-label">Kunlik Limit</div>
+                    <div class="stat-value" id="daily-limit" style="color:var(--accent)">0</div>
+                    <div style="font-size:11px;color:var(--muted);margin-top:4px;">so'm / kun</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Oy Tugashiga</div>
+                    <div class="stat-value" id="days-left" style="color:var(--yellow)">0</div>
+                    <div style="font-size:11px;color:var(--muted);margin-top:4px;" id="days-detail">kun qoldi</div>
+                </div>
+            </div>
+
             <div class="card">
-                <div class="section-title">
-                    <span>Chiqimlar statistikasi</span>
-                </div>
+                <div class="section-title">Kategoriyalar bo'yicha</div>
                 <div class="chart-container">
                     <canvas id="chart"></canvas>
                 </div>
             </div>
         </div>
-        
+
+        <!-- HISTORY TAB -->
         <div id="history-tab" class="tab-content">
             <div class="card">
-                <div class="section-title">
-                    <span>Operatsiyalar tarixi</span>
-                </div>
-                
-                <div class="filter-buttons">
-                    <button class="filter-btn active" data-filter="week">Oxirgi hafta</button>
-                    <button class="filter-btn" data-filter="month">Oxirgi oy</button>
+                <div class="section-title">Operatsiyalar tarixi</div>
+                <div class="filter-row">
+                    <button class="filter-btn active" data-filter="week">Hafta</button>
+                    <button class="filter-btn" data-filter="month">Oy</button>
                     <select id="category-filter" class="filter-select">
-                        <option value="all">Barchasi</option>
-                        <!-- Kategoriyalar dinamik ravishda yuklanadi -->
+                        <option value="all">Barcha kategoriya</option>
                     </select>
                 </div>
-                
-                <div id="expenses-list" class="loading">
-                    Ma'lumotlar yuklanmoqda...
+                <div id="expenses-list">
+                    <div class="empty"><div class="empty-icon">📭</div>Ma'lumotlar yo'q</div>
                 </div>
             </div>
         </div>
-        
+
+        <!-- ADD TAB -->
         <div id="add-tab" class="tab-content">
             <div class="card">
-                <div class="section-title">
-                    <span>Yangi operatsiya</span>
-                </div>
-                
+                <div class="section-title">Yangi operatsiya</div>
+
                 <div class="form-group">
-                    <label class="form-label">Summa</label>
-                    <input type="number" id="amount" class="form-input" placeholder="Summani kiriting (so'm)">
+                    <label class="form-label">Summa (so'm)</label>
+                    <input type="number" id="amount" class="form-input" placeholder="0">
                 </div>
-                
+
                 <div class="form-group">
-                    <label class="form-label">Sabab</label>
+                    <label class="form-label">Sabab / Izoh</label>
                     <input type="text" id="reason" class="form-input" placeholder="Nima uchun?">
                 </div>
-                
+
                 <div class="form-group">
                     <label class="form-label">Kategoriya</label>
-                    <select id="category" class="form-select">
-                        <!-- Kategoriyalar dinamik ravishda yuklanadi -->
-                    </select>
+                    <select id="category" class="form-select"></select>
                 </div>
-                
+
                 <div class="form-group">
                     <label class="form-label">Tur</label>
-                    <select id="type" class="form-select">
-                        <option value="chiqim">Chiqim</option>
-                        <option value="kirim">Kirim</option>
-                    </select>
+                    <div class="type-toggle">
+                        <div class="type-option selected" data-val="chiqim" id="type-chiqim">⬇️ Chiqim</div>
+                        <div class="type-option" data-val="kirim" id="type-kirim">⬆️ Kirim</div>
+                    </div>
+                    <input type="hidden" id="type" value="chiqim">
                 </div>
-                
+
                 <button class="btn btn-primary" id="add-transaction">Qo'shish</button>
             </div>
         </div>
-        
+
+        <!-- MANAGE TAB -->
         <div id="manage-tab" class="tab-content">
             <div class="card">
-                <div class="section-title">
-                    <span>Budjetni boshqarish</span>
+                <div class="section-title">Hisob boshqaruvi</div>
+                <div class="mgmt-grid">
+                    <button class="btn btn-warning btn-sm" id="reset-chart">Joriy oyni tozalash</button>
+                    <button class="btn btn-danger btn-sm" id="reset-month">Yangi oy boshlash</button>
+                    <button class="btn btn-danger btn-sm" id="reset-all">Barchasini tozalash</button>
                 </div>
-                
-                <div class="management-buttons">
-                    <button class="btn btn-warning" id="reset-chart">Chartni 0 ga tushirish</button>
-                    <button class="btn btn-danger" id="reset-month">Yangi oy boshlash</button>
-                    <button class="btn btn-danger" id="reset-all">Barchasini tozalash</button>
+            </div>
+
+            <div class="card">
+                <div class="section-title">Kategoriyalar</div>
+                <div id="categories-list">
+                    <div class="empty"><div class="empty-icon">🗂️</div>Kategoriyalar yo'q</div>
                 </div>
-                
-                <!-- Kategoriyalarni boshqarish bo'limi -->
-                <div class="categories-section">
-                    <div class="section-title">
-                        <span>Kategoriyalarni boshqarish</span>
-                    </div>
-                    
-                    <div id="categories-list" class="loading">
-                        Kategoriyalar yuklanmoqda...
-                    </div>
-                    
-                    <div class="add-category-form">
-                        <div class="form-group">
-                            <label class="form-label">Yangi kategoriya nomi</label>
-                            <input type="text" id="new-category-name" class="form-input" placeholder="Kategoriya nomi">
-                        </div>
-                        <button class="btn btn-success" id="add-category">Kategoriya qo'shish</button>
-                    </div>
+                <div class="divider"></div>
+                <div class="form-group">
+                    <label class="form-label">Yangi kategoriya</label>
+                    <input type="text" id="new-category-name" class="form-input" placeholder="Kategoriya nomi">
                 </div>
-                
-                <div class="download-section">
-                    <div class="section-title">
-                        <span>Ma'lumotlarni yuklab olish</span>
-                    </div>
-                    
-                    <div class="download-options">
-                        <select id="file-format" class="form-select">
-                            <option value="csv">CSV fayl (Excel)</option>
-                            <option value="txt">TXT fayl</option>
-                            <option value="json">JSON fayl</option>
-                        </select>
-                    </div>
-                    
-                    <div class="download-buttons">
-                        <button class="btn btn-success" id="download-btn">Yuklab olish</button>
-                        <button class="btn btn-primary" id="copy-data">Nusxa olish</button>
-                    </div>
+                <button class="btn btn-success" id="add-category">Kategoriya qo'shish</button>
+            </div>
+
+            <div class="card">
+                <div class="section-title">Ma'lumotlarni eksport</div>
+                <div class="form-group">
+                    <select id="file-format" class="form-select">
+                        <option value="csv">CSV (Excel uchun)</option>
+                        <option value="txt">TXT fayl</option>
+                        <option value="json">JSON fayl</option>
+                    </select>
+                </div>
+                <div class="dl-row">
+                    <button class="btn btn-success btn-sm" id="download-btn">⬇ Yuklab olish</button>
+                    <button class="btn btn-outline btn-sm" id="copy-data">⎘ Nusxa olish</button>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Operatsiyani tahrirlash modali -->
-    <div id="edit-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title">Operatsiyani tahrirlash</div>
-                <button class="close-modal">&times;</button>
+    </div>
+</div>
+
+<!-- EDIT TRANSACTION MODAL -->
+<div id="edit-modal" class="modal">
+    <div class="modal-sheet">
+        <div class="modal-header">
+            <div class="modal-title">Operatsiyani tahrirlash</div>
+            <button class="modal-close" id="close-edit-modal">×</button>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Summa</label>
+            <input type="number" id="edit-amount" class="form-input">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Sabab</label>
+            <input type="text" id="edit-reason" class="form-input">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Kategoriya</label>
+            <select id="edit-category" class="form-select"></select>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Tur</label>
+            <div class="type-toggle">
+                <div class="type-option selected" data-val="chiqim" id="edit-type-chiqim">⬇️ Chiqim</div>
+                <div class="type-option" data-val="kirim" id="edit-type-kirim">⬆️ Kirim</div>
             </div>
-            <div class="form-group">
-                <label class="form-label">Summa</label>
-                <input type="number" id="edit-amount" class="form-input">
-            </div>
-            <div class="form-group">
-                <label class="form-label">Sabab</label>
-                <input type="text" id="edit-reason" class="form-input">
-            </div>
-            <div class="form-group">
-                <label class="form-label">Kategoriya</label>
-                <select id="edit-category" class="form-select">
-                    <!-- Kategoriyalar dinamik ravishda yuklanadi -->
-                </select>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Tur</label>
-                <select id="edit-type" class="form-select">
-                    <option value="chiqim">Chiqim</option>
-                    <option value="kirim">Kirim</option>
-                </select>
-            </div>
-            <button class="btn btn-primary" id="save-edit">Saqlash</button>
+            <input type="hidden" id="edit-type" value="chiqim">
+        </div>
+        <button class="btn btn-primary" id="save-edit">Saqlash</button>
+    </div>
+</div>
+
+<!-- EDIT CATEGORY MODAL -->
+<div id="edit-category-modal" class="modal">
+    <div class="modal-sheet">
+        <div class="modal-header">
+            <div class="modal-title">Kategoriyani tahrirlash</div>
+            <button class="modal-close" id="close-edit-category-modal">×</button>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Kategoriya nomi</label>
+            <input type="text" id="edit-category-name" class="form-input">
+        </div>
+        <button class="btn btn-primary" id="save-category-edit">Saqlash</button>
+    </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div id="confirm-modal" class="modal">
+    <div class="modal-sheet" style="max-width:340px;margin:0 auto 0;">
+        <div class="modal-header">
+            <div class="modal-title" id="confirm-title">Tasdiqlash</div>
+        </div>
+        <p id="confirm-message" style="color:var(--muted);font-size:14px;margin-bottom:20px;line-height:1.6;"></p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <button class="btn btn-danger" id="confirm-yes">Ha, tasdiqlash</button>
+            <button class="btn btn-outline" id="confirm-no">Bekor qilish</button>
         </div>
     </div>
+</div>
 
-    <!-- Kategoriyani tahrirlash modali -->
-    <div id="edit-category-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title">Kategoriyani tahrirlash</div>
-                <button class="close-modal" id="close-edit-category-modal">&times;</button>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Kategoriya nomi</label>
-                <input type="text" id="edit-category-name" class="form-input">
-            </div>
-            <button class="btn btn-primary" id="save-category-edit">Saqlash</button>
-        </div>
-    </div>
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
 
-    <div id="notification" class="notification">
-        <span id="notification-message"></span>
-    </div>
+<script>
+    // ─── STATE ───────────────────────────────────────────────────────────────
+    let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+    let balance = parseInt(localStorage.getItem('balance')) || 0;
+    let currentMonth = parseInt(localStorage.getItem('currentMonth') ?? new Date().getMonth());
+    let currentYear = parseInt(localStorage.getItem('currentYear') ?? new Date().getFullYear());
+    let editingTransactionId = null;
+    let editingCategoryId = null;
 
-    <script>
-        // DOM elementlari - hammasini bir joyda aniqlaymiz
-        let tabs, tabContents, filterButtons, addButton, notification, notificationMessage;
-        let resetChartBtn, resetMonthBtn, resetAllBtn, copyDataBtn, downloadBtn;
-        let editModal, closeModalBtn, saveEditBtn;
-        let categoryFilter, fileFormatSelect;
-        
-        // Kategoriyalarni boshqarish uchun yangi elementlar
-        let categoriesList, addCategoryBtn, newCategoryNameInput;
-        let editCategoryModal, closeEditCategoryModalBtn, saveCategoryEditBtn, editCategoryNameInput;
-        let editingCategoryId = null;
+    let categories = JSON.parse(localStorage.getItem('categories')) || [
+        { id: 1, name: 'UY', value: 'uy' },
+        { id: 2, name: 'Kvartira', value: 'kv' },
+        { id: 3, name: 'Oziq-ovqat', value: 'ov' },
+        { id: 4, name: 'Ozm', value: 'ozm' },
+        { id: 5, name: 'Boshqa', value: 'boshqa' }
+    ];
 
-        // Ma'lumotlarni saqlash
-        let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
-        let balance = parseInt(localStorage.getItem('balance')) || 0;
-        let currentMonth = localStorage.getItem('currentMonth') || new Date().getMonth();
-        let currentYear = localStorage.getItem('currentYear') || new Date().getFullYear();
-        let editingTransactionId = null;
-        
-        // Kategoriyalarni saqlash
-        let categories = JSON.parse(localStorage.getItem('categories')) || [
-            { id: 1, name: 'UY', value: 'uy' },
-            { id: 2, name: 'Kvartira', value: 'kv' },
-            { id: 3, name: 'Oziq-ovqat', value: 'ov' },
-            { id: 4, name: 'Ozm', value: 'ozm' },
-            { id: 5, name: 'Boshqa', value: 'boshqa' }
-        ];
+    const MONTHS_UZ = ['Yan','Fev','Mar','Apr','May','Iyun','Iyul','Avg','Sen','Okt','Nov','Dek'];
 
-        // Dastur ishga tushganda
-        document.addEventListener('DOMContentLoaded', function() {
-            // DOM elementlarini topish
-            initializeDOM();
-            
-            // Telegram WebApp ni ishga tushirish
-            if (typeof Telegram !== 'undefined') {
-                let tg = window.Telegram.WebApp;
-                tg.expand();
-                tg.MainButton.setText("Yopish").onClick(() => tg.close()).show();
-                
-                // Foydalanuvchi ma'lumotlarini olish
-                const user = tg.initDataUnsafe.user;
-                if (user && user.id !== 1034121198) {
-                    document.body.innerHTML = `
-                        <div style="display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column; padding: 20px; text-align: center;">
-                            <h2 style="color: #dc3545;">Ruxsat yo'q</h2>
-                            <p>Ushbu ilova faqat @Axrorbek_o6 uchun mo'ljallangan</p>
-                        </div>
-                    `;
-                    return;
-                }
-            }
-            
-            // Kategoriyalar ro'yxatini yangilash
-            updateCategoriesUI();
-            
-            // Event listenerlarni qo'shish
-            setupEventListeners();
-            
-            // Dasturiy ma'lumotlarni yuklash
-            updateBalanceAndStats();
-        });
+    // ─── INIT ─────────────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+        // Telegram WebApp himoyasi
+        if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
+            const tg = Telegram.WebApp;
+            tg.expand();
+            tg.MainButton.setText("Yopish").onClick(() => tg.close()).show();
 
-        // DOM elementlarini topish
-        function initializeDOM() {
-            tabs = document.querySelectorAll('.tab');
-            tabContents = document.querySelectorAll('.tab-content');
-            filterButtons = document.querySelectorAll('.filter-btn');
-            addButton = document.getElementById('add-transaction');
-            notification = document.getElementById('notification');
-            notificationMessage = document.getElementById('notification-message');
-            
-            // Boshqarish tugmalari
-            resetChartBtn = document.getElementById('reset-chart');
-            resetMonthBtn = document.getElementById('reset-month');
-            resetAllBtn = document.getElementById('reset-all');
-            copyDataBtn = document.getElementById('copy-data');
-            downloadBtn = document.getElementById('download-btn');
-            
-            // Modal elementlari
-            editModal = document.getElementById('edit-modal');
-            closeModalBtn = document.querySelector('.close-modal');
-            saveEditBtn = document.getElementById('save-edit');
-            
-            // Kategoriya filteri
-            categoryFilter = document.getElementById('category-filter');
-            
-            // Fayl formati selector
-            fileFormatSelect = document.getElementById('file-format');
-            
-            // Kategoriyalarni boshqarish elementlari
-            categoriesList = document.getElementById('categories-list');
-            addCategoryBtn = document.getElementById('add-category');
-            newCategoryNameInput = document.getElementById('new-category-name');
-            
-            // Kategoriyani tahrirlash modali
-            editCategoryModal = document.getElementById('edit-category-modal');
-            closeEditCategoryModalBtn = document.getElementById('close-edit-category-modal');
-            saveCategoryEditBtn = document.getElementById('save-category-edit');
-            editCategoryNameInput = document.getElementById('edit-category-name');
-        }
-
-        // Event listenerlarni sozlash
-        function setupEventListeners() {
-            // Tablarni boshqarish
-            tabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    const tabId = tab.getAttribute('data-tab');
-                    
-                    tabs.forEach(t => t.classList.remove('active'));
-                    tabContents.forEach(tc => tc.classList.remove('active'));
-                    
-                    tab.classList.add('active');
-                    document.getElementById(`${tabId}-tab`).classList.add('active');
-                    
-                    if (tabId === 'history') {
-                        loadExpenses();
-                    } else if (tabId === 'manage') {
-                        loadCategories();
-                    }
-                });
-            });
-            
-            // Filter tugmalarini boshqarish
-            filterButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    filterButtons.forEach(btn => btn.classList.remove('active'));
-                    button.classList.add('active');
-                    loadExpenses();
-                });
-            });
-            
-            // Kategoriya filteri o'zgartirilganda
-            categoryFilter.addEventListener('change', loadExpenses);
-            
-            // Yangi operatsiya qo'shish
-            addButton.addEventListener('click', addTransaction);
-            
-            // Chartni 0 ga tushirish
-            resetChartBtn.addEventListener('click', resetChart);
-            
-            // Yangi oy boshlash
-            resetMonthBtn.addEventListener('click', resetMonth);
-            
-            // Barchasini tozalash
-            resetAllBtn.addEventListener('click', resetAll);
-            
-            // Ma'lumotlarni nusxalash
-            copyDataBtn.addEventListener('click', copyData);
-            
-            // Ma'lumotlarni yuklab olish
-            downloadBtn.addEventListener('click', downloadData);
-            
-            // Modalni yopish
-            closeModalBtn.addEventListener('click', () => {
-                editModal.style.display = 'none';
-            });
-            
-            // Kategoriya tahrirlash modalini yopish
-            closeEditCategoryModalBtn.addEventListener('click', () => {
-                editCategoryModal.style.display = 'none';
-            });
-            
-            // Modal tashqarisiga bosganda yopish
-            window.addEventListener('click', (e) => {
-                if (e.target === editModal) {
-                    editModal.style.display = 'none';
-                }
-                if (e.target === editCategoryModal) {
-                    editCategoryModal.style.display = 'none';
-                }
-            });
-            
-            // Tahrirlangan operatsiyani saqlash
-            saveEditBtn.addEventListener('click', saveEdit);
-            
-            // Kategoriya qo'shish
-            addCategoryBtn.addEventListener('click', addCategory);
-            
-            // Kategoriyani tahrirlashni saqlash
-            saveCategoryEditBtn.addEventListener('click', saveCategoryEdit);
-        }
-
-        // Xabar ko'rsatish funksiyasi
-        function showNotification(message, isSuccess = true) {
-            if (!notification || !notificationMessage) return;
-            
-            notificationMessage.textContent = message;
-            notification.className = 'notification ' + (isSuccess ? 'success' : 'error');
-            notification.classList.add('show');
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
-        }
-
-        // Kategoriyalar UI ni yangilash
-        function updateCategoriesUI() {
-            // "Qo'shish" bo'limidagi kategoriya selectorini yangilash
-            const categorySelect = document.getElementById('category');
-            if (categorySelect) {
-                categorySelect.innerHTML = '';
-                categories.forEach(category => {
-                    const option = document.createElement('option');
-                    option.value = category.value;
-                    option.textContent = category.name;
-                    categorySelect.appendChild(option);
-                });
-            }
-            
-            // "Tarix" bo'limidagi kategoriya filterini yangilash
-            if (categoryFilter) {
-                categoryFilter.innerHTML = '<option value="all">Barchasi</option>';
-                categories.forEach(category => {
-                    const option = document.createElement('option');
-                    option.value = category.value;
-                    option.textContent = category.name;
-                    categoryFilter.appendChild(option);
-                });
-            }
-            
-            // Tahrirlash modalidagi kategoriya selectorini yangilash
-            const editCategorySelect = document.getElementById('edit-category');
-            if (editCategorySelect) {
-                editCategorySelect.innerHTML = '';
-                categories.forEach(category => {
-                    const option = document.createElement('option');
-                    option.value = category.value;
-                    option.textContent = category.name;
-                    editCategorySelect.appendChild(option);
-                });
-            }
-            
-            // Kategoriyalarni localStorage ga saqlash
-            localStorage.setItem('categories', JSON.stringify(categories));
-        }
-
-        // Kategoriyalarni yuklash va ko'rsatish
-        function loadCategories() {
-            if (!categoriesList) return;
-            
-            if (categories.length === 0) {
-                categoriesList.innerHTML = '<div class="loading">Hech qanday kategoriya topilmadi</div>';
-                return;
-            }
-            
-            let html = '';
-            categories.forEach(category => {
-                // Kategoriyani operatsiyalarda ishlatilganligini tekshirish
-                const isUsed = transactions.some(t => t.category === category.value);
-                
-                html += `
-                    <div class="category-item">
-                        <div class="category-name">${category.name}</div>
-                        <div class="category-actions">
-                            <button class="category-action-btn edit-btn" data-id="${category.id}">Tahrir</button>
-                            <button class="category-action-btn delete-btn" data-id="${category.id}" ${isUsed ? 'disabled' : ''}>O'chir</button>
-                        </div>
+            const user = tg.initDataUnsafe?.user;
+            if (user && user.id !== 1034121198) {
+                document.body.innerHTML = `
+                    <div style="display:flex;justify-content:center;align-items:center;height:100vh;
+                                flex-direction:column;padding:30px;text-align:center;
+                                background:#0a0e1a;font-family:'Sora',sans-serif;">
+                        <div style="font-size:48px;margin-bottom:20px;">🔒</div>
+                        <h2 style="color:#ff4d6d;margin-bottom:10px;font-size:20px;">Ruxsat yo'q</h2>
+                        <p style="color:#64748b;font-size:14px;">
+                            Ushbu ilova faqat <strong style="color:#00d4ff;">@Axrorbek_o6</strong> uchun mo'ljallangan
+                        </p>
                     </div>
                 `;
-            });
-            
-            categoriesList.innerHTML = html;
-            
-            // Kategoriyalarni tahrirlash va o'chirish tugmalariga event listener qo'shish
-            document.querySelectorAll('.category-actions .edit-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const id = parseInt(e.target.getAttribute('data-id'));
-                    editCategory(id);
-                });
-            });
-            
-            document.querySelectorAll('.category-actions .delete-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    if (e.target.disabled) {
-                        showNotification('Bu kategoriyani o\'chirib bo\'lmaydi, chunki u operatsiyalarda ishlatilgan!', false);
-                        return;
-                    }
-                    const id = parseInt(e.target.getAttribute('data-id'));
-                    deleteCategory(id);
-                });
-            });
+                return;
+            }
         }
 
-        // Kategoriya qo'shish
-        function addCategory() {
-            const name = newCategoryNameInput.value.trim();
-            
-            if (!name) {
-                showNotification('Iltimos, kategoriya nomini kiriting!', false);
-                return;
-            }
-            
-            // Kategoriya nomi unikal bo'lishi kerak
-            if (categories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
-                showNotification('Bu nom bilan kategoriya allaqachon mavjud!', false);
-                return;
-            }
-            
-            // Yangi kategoriya yaratish
-            const newCategory = {
-                id: Date.now(),
-                name: name,
-                value: name.toLowerCase().replace(/\s+/g, '-')
-            };
-            
-            // Kategoriyani qo'shish
-            categories.push(newCategory);
-            
-            // UI ni yangilash
-            updateCategoriesUI();
+        updateMonthBadge();
+        updateCategorySelects();
+        updateBalanceAndStats();
+        setupEventListeners();
+    });
+
+    function updateMonthBadge() {
+        const now = new Date();
+        document.getElementById('month-badge').textContent = `${MONTHS_UZ[now.getMonth()]} ${now.getFullYear()}`;
+    }
+
+    // ─── EVENT LISTENERS ──────────────────────────────────────────────────────
+    function setupEventListeners() {
+        // TABS
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const id = tab.dataset.tab;
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(`${id}-tab`).classList.add('active');
+                if (id === 'history') loadExpenses();
+                if (id === 'manage') loadCategories();
+            });
+        });
+
+        // FILTERS
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                loadExpenses();
+            });
+        });
+
+        document.getElementById('category-filter').addEventListener('change', loadExpenses);
+
+        // TYPE TOGGLE (Add)
+        ['chiqim','kirim'].forEach(val => {
+            document.getElementById(`type-${val}`).addEventListener('click', () => {
+                document.querySelectorAll('#add-tab .type-option').forEach(o => o.classList.remove('selected'));
+                document.getElementById(`type-${val}`).classList.add('selected');
+                document.getElementById('type').value = val;
+            });
+        });
+
+        // TYPE TOGGLE (Edit)
+        ['chiqim','kirim'].forEach(val => {
+            document.getElementById(`edit-type-${val}`).addEventListener('click', () => {
+                document.querySelectorAll('#edit-modal .type-option').forEach(o => o.classList.remove('selected'));
+                document.getElementById(`edit-type-${val}`).classList.add('selected');
+                document.getElementById('edit-type').value = val;
+            });
+        });
+
+        // ADD TRANSACTION
+        document.getElementById('add-transaction').addEventListener('click', addTransaction);
+
+        // MANAGE
+        // Kunlik limit kartasini bosish -> tarix tabiga o'tish
+        document.getElementById('go-history-btn').addEventListener('click', () => {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+            document.querySelector('[data-tab="history"]').classList.add('active');
+            document.getElementById('history-tab').classList.add('active');
+            loadExpenses();
+        });
+
+        document.getElementById('reset-chart').addEventListener('click', resetChart);
+        document.getElementById('reset-month').addEventListener('click', resetMonth);
+        document.getElementById('reset-all').addEventListener('click', resetAll);
+        document.getElementById('download-btn').addEventListener('click', downloadData);
+        document.getElementById('copy-data').addEventListener('click', copyData);
+
+        // MODALS
+        document.getElementById('close-edit-modal').addEventListener('click', () => closeModal('edit-modal'));
+        document.getElementById('close-edit-category-modal').addEventListener('click', () => closeModal('edit-category-modal'));
+        document.getElementById('save-edit').addEventListener('click', saveEdit);
+        document.getElementById('save-category-edit').addEventListener('click', saveCategoryEdit);
+        document.getElementById('add-category').addEventListener('click', addCategory);
+
+        // Confirm modal buttons
+        document.getElementById('confirm-yes').addEventListener('click', () => {
+            closeModal('confirm-modal');
+            if (_confirmCallback) { _confirmCallback(); _confirmCallback = null; }
+        });
+        document.getElementById('confirm-no').addEventListener('click', () => {
+            closeModal('confirm-modal');
+            _confirmCallback = null;
+        });
+
+        // Close modal on backdrop click
+        ['edit-modal','edit-category-modal','confirm-modal'].forEach(id => {
+            document.getElementById(id).addEventListener('click', e => {
+                if (e.target === document.getElementById(id)) closeModal(id);
+            });
+        });
+    }
+
+    // ─── MODAL HELPERS ────────────────────────────────────────────────────────
+    function openModal(id) { document.getElementById(id).classList.add('open'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+    // ─── TOAST ────────────────────────────────────────────────────────────────
+    function showToast(msg, type = 'success') {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg;
+        toast.className = `toast ${type} show`;
+        clearTimeout(toast._t);
+        toast._t = setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // ─── CATEGORIES ──────────────────────────────────────────────────────────
+    function updateCategorySelects() {
+        const ids = ['category', 'edit-category', 'category-filter'];
+        ids.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const isFilter = id === 'category-filter';
+            el.innerHTML = isFilter ? '<option value="all">Barcha kategoriya</option>' : '';
+            categories.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.value;
+                opt.textContent = c.name;
+                el.appendChild(opt);
+            });
+        });
+        localStorage.setItem('categories', JSON.stringify(categories));
+    }
+
+    function loadCategories() {
+        const list = document.getElementById('categories-list');
+        if (!categories.length) {
+            list.innerHTML = '<div class="empty"><div class="empty-icon">🗂️</div>Kategoriyalar yo\'q</div>';
+            return;
+        }
+        list.innerHTML = categories.map(c => {
+            const used = transactions.some(t => t.category === c.value);
+            return `
+                <div class="cat-item">
+                    <span class="cat-name">${c.name}</span>
+                    <div class="cat-actions">
+                        <button class="action-btn edit-btn" onclick="editCategory(${c.id})">Tahrir</button>
+                        <button class="action-btn delete-btn" onclick="deleteCategory(${c.id})" ${used ? 'disabled style="opacity:0.35;cursor:not-allowed"' : ''}>O'chir</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function addCategory() {
+        const name = document.getElementById('new-category-name').value.trim();
+        if (!name) { showToast('Kategoriya nomini kiriting!', 'error'); return; }
+        if (categories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+            showToast('Bu kategoriya allaqachon mavjud!', 'error'); return;
+        }
+        categories.push({ id: Date.now(), name, value: name.toLowerCase().replace(/\s+/g, '-') });
+        updateCategorySelects();
+        loadCategories();
+        document.getElementById('new-category-name').value = '';
+        showToast('Kategoriya qo\'shildi!');
+    }
+
+    function editCategory(id) {
+        const cat = categories.find(c => c.id === id);
+        if (!cat) return;
+        document.getElementById('edit-category-name').value = cat.name;
+        editingCategoryId = id;
+        openModal('edit-category-modal');
+    }
+
+    function deleteCategory(id) {
+        customConfirm('Bu kategoriyani o\'chirishni istaysizmi?', () => {
+            categories = categories.filter(c => c.id !== id);
+            updateCategorySelects();
             loadCategories();
-            showNotification('Kategoriya muvaffaqiyatli qo\'shildi!');
-            
-            // Formani tozalash
-            newCategoryNameInput.value = '';
+            showToast('Kategoriya o\'chirildi!');
+        });
+    }
+
+    function saveCategoryEdit() {
+        const name = document.getElementById('edit-category-name').value.trim();
+        if (!name) { showToast('Nomni kiriting!', 'error'); return; }
+        if (categories.some(c => c.name.toLowerCase() === name.toLowerCase() && c.id !== editingCategoryId)) {
+            showToast('Bu nom allaqachon mavjud!', 'error'); return;
+        }
+        const idx = categories.findIndex(c => c.id === editingCategoryId);
+        if (idx === -1) return;
+        categories[idx].name = name;
+        categories[idx].value = name.toLowerCase().replace(/\s+/g, '-');
+        updateCategorySelects();
+        loadCategories();
+        closeModal('edit-category-modal');
+        showToast('Kategoriya tahrirlandi!');
+    }
+
+    // ─── TRANSACTIONS ─────────────────────────────────────────────────────────
+    function addTransaction() {
+        const amount = document.getElementById('amount').value;
+        const reason = document.getElementById('reason').value.trim();
+        const category = document.getElementById('category').value;
+        const type = document.getElementById('type').value;
+        if (!amount || !reason) { showToast('Summa va sababni kiriting!', 'error'); return; }
+
+        const tx = { id: Date.now(), amount, reason, category, type, date: new Date().toISOString() };
+        balance += type === 'kirim' ? parseInt(amount) : -parseInt(amount);
+        transactions.push(tx);
+        saveData();
+        updateBalanceAndStats();
+        showToast('Operatsiya qo\'shildi! ✓');
+        document.getElementById('amount').value = '';
+        document.getElementById('reason').value = '';
+    }
+
+    function editTransaction(id) {
+        const tx = transactions.find(t => t.id === id);
+        if (!tx) return;
+        document.getElementById('edit-amount').value = tx.amount;
+        document.getElementById('edit-reason').value = tx.reason;
+        document.getElementById('edit-category').value = tx.category;
+        document.getElementById('edit-type').value = tx.type;
+        // sync toggle
+        ['chiqim','kirim'].forEach(val => {
+            const el = document.getElementById(`edit-type-${val}`);
+            el.classList.toggle('selected', val === tx.type);
+        });
+        editingTransactionId = id;
+        openModal('edit-modal');
+    }
+
+    function deleteTransaction(id) {
+        customConfirm('Bu operatsiyani o\'chirishni istaysizmi?', () => {
+            const idx = transactions.findIndex(t => t.id === id);
+            if (idx === -1) return;
+            const tx = transactions[idx];
+            balance += tx.type === 'chiqim' ? parseInt(tx.amount) : -parseInt(tx.amount);
+            transactions.splice(idx, 1);
+            saveData();
+            updateBalanceAndStats();
+            loadExpenses();
+            showToast('Operatsiya o\'chirildi!');
+        });
+    }
+
+    function saveEdit() {
+        const amount = document.getElementById('edit-amount').value;
+        const reason = document.getElementById('edit-reason').value.trim();
+        const category = document.getElementById('edit-category').value;
+        const type = document.getElementById('edit-type').value;
+        if (!amount || !reason) { showToast('Barcha maydonlarni to\'ldiring!', 'error'); return; }
+
+        const idx = transactions.findIndex(t => t.id === editingTransactionId);
+        if (idx === -1) return;
+        const old = transactions[idx];
+        balance += old.type === 'chiqim' ? parseInt(old.amount) : -parseInt(old.amount);
+        balance += type === 'kirim' ? parseInt(amount) : -parseInt(amount);
+        transactions[idx] = { ...old, amount, reason, category, type };
+        saveData();
+        updateBalanceAndStats();
+        loadExpenses();
+        closeModal('edit-modal');
+        showToast('Operatsiya tahrirlandi!');
+    }
+
+    // ─── DISPLAY ──────────────────────────────────────────────────────────────
+    function loadExpenses() {
+        const list = document.getElementById('expenses-list');
+        const filter = document.querySelector('.filter-btn.active')?.dataset.filter || 'week';
+        const catFilter = document.getElementById('category-filter')?.value || 'all';
+
+        let txs = [...transactions].reverse().filter(t => {
+            const d = new Date(t.date);
+            return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+        });
+
+        if (filter === 'week') {
+            const ago = new Date(); ago.setDate(ago.getDate() - 7);
+            txs = txs.filter(t => new Date(t.date) >= ago);
         }
 
-        // Kategoriyani tahrirlash
-        function editCategory(id) {
-            const category = categories.find(c => c.id === id);
-            if (!category) return;
-            
-            // Modalni to'ldirish
-            editCategoryNameInput.value = category.name;
-            editingCategoryId = id;
-            editCategoryModal.style.display = 'flex';
+        if (catFilter !== 'all') txs = txs.filter(t => t.category === catFilter);
+
+        if (!txs.length) {
+            list.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>Operatsiyalar topilmadi</div>';
+            return;
         }
 
-        // Kategoriyani o'chirish
-        function deleteCategory(id) {
-            if (!confirm('Bu kategoriyani o\'chirishni istaysizmi?')) return;
-            
-            const categoryIndex = categories.findIndex(c => c.id === id);
-            if (categoryIndex === -1) return;
-            
-            // Kategoriyani o'chirish
-            categories.splice(categoryIndex, 1);
-            
-            // UI ni yangilash
-            updateCategoriesUI();
-            loadCategories();
-            showNotification('Kategoriya muvaffaqiyatli o\'chirildi!');
+        list.innerHTML = txs.map(tx => {
+            const cat = categories.find(c => c.value === tx.category);
+            const catName = cat ? cat.name : tx.category;
+            const isIncome = tx.type === 'kirim';
+            const sign = isIncome ? '+' : '-';
+            const cls = isIncome ? 'income' : 'expense';
+            const icon = isIncome ? '⬆️' : '⬇️';
+            const date = new Date(tx.date).toLocaleDateString('uz-UZ');
+            return `
+                <div class="tx-item">
+                    <div class="tx-icon ${cls}">${icon}</div>
+                    <div class="tx-info">
+                        <div class="tx-title">${tx.reason}</div>
+                        <div class="tx-meta">
+                            <span class="tx-date">${date}</span>
+                            <span class="tx-cat">${catName}</span>
+                        </div>
+                    </div>
+                    <div class="tx-right">
+                        <div class="tx-amount ${cls}">${sign}${parseInt(tx.amount).toLocaleString()}</div>
+                        <div class="tx-actions">
+                            <button class="action-btn edit-btn" onclick="editTransaction(${tx.id})">✎</button>
+                            <button class="action-btn delete-btn" onclick="deleteTransaction(${tx.id})">✕</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // ─── STATS + CHART ────────────────────────────────────────────────────────
+    function updateBalanceAndStats() {
+        // Balance display
+        const absBalance = Math.abs(balance);
+        document.getElementById('current-balance').innerHTML =
+            `${absBalance.toLocaleString()} <span>so'm</span>`;
+
+        const indicator = document.getElementById('balance-indicator');
+        const status = document.getElementById('balance-status');
+        if (balance >= 0) {
+            indicator.style.color = 'var(--green)';
+            indicator.style.background = 'rgba(16,212,142,0.1)';
+            status.textContent = 'Musbat balans';
+        } else {
+            indicator.style.color = 'var(--red)';
+            indicator.style.background = 'rgba(255,77,109,0.1)';
+            status.textContent = 'Manfiy balans';
         }
 
-        // Tahrirlangan kategoriyani saqlash
-        function saveCategoryEdit() {
-            const name = editCategoryNameInput.value.trim();
-            
-            if (!name) {
-                showNotification('Iltimos, kategoriya nomini kiriting!', false);
-                return;
-            }
-            
-            // Kategoriya nomi unikal bo'lishi kerak (o'zidan boshqa)
-            if (categories.some(c => c.name.toLowerCase() === name.toLowerCase() && c.id !== editingCategoryId)) {
-                showNotification('Bu nom bilan kategoriya allaqachon mavjud!', false);
-                return;
-            }
-            
-            const categoryIndex = categories.findIndex(c => c.id === editingCategoryId);
-            if (categoryIndex === -1) return;
-            
-            // Kategoriyani yangilash
-            categories[categoryIndex].name = name;
-            categories[categoryIndex].value = name.toLowerCase().replace(/\s+/g, '-');
-            
-            // UI ni yangilash
-            updateCategoriesUI();
-            loadCategories();
-            editCategoryModal.style.display = 'none';
-            showNotification('Kategoriya muvaffaqiyatli tahrirlandi!');
-        }
+        // Monthly stats
+        const monthTxs = transactions.filter(t => {
+            const d = new Date(t.date);
+            return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+        });
 
-        // Chart yaratish
-        function initChart() {
-            const ctx = document.getElementById('chart');
-            if (!ctx) return;
-            
-            // Avvalgi chartni yo'q qilish
-            if (window.budgetChart) {
-                window.budgetChart.destroy();
+        // Days remaining calculation (works locally, uses browser Date)
+        const now = new Date();
+        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0); // last day of month
+        const extraDays = 4;
+        const daysLeft = (lastDay.getDate() - now.getDate()) + extraDays;
+        const totalDays = daysLeft > 0 ? daysLeft : 1;
+
+        const daysToEnd = lastDay.getDate() - now.getDate(); // oyning oxirigacha
+        document.getElementById('days-left').textContent = daysLeft;
+        document.getElementById('days-detail').textContent =
+            `${daysToEnd} kun + 4 = ${daysLeft} kun`;
+
+        // Daily limit = balance / remaining days
+        const dailyLimit = balance > 0 ? Math.floor(balance / totalDays) : 0;
+        document.getElementById('daily-limit').textContent = dailyLimit.toLocaleString();
+
+        initChart(monthTxs);
+    }
+
+    function initChart(monthTxs) {
+        const ctx = document.getElementById('chart');
+        if (window.budgetChart) window.budgetChart.destroy();
+
+        const totals = {};
+        categories.forEach(c => { totals[c.value] = 0; });
+        monthTxs.filter(t => t.type === 'chiqim').forEach(t => {
+            if (totals.hasOwnProperty(t.category)) totals[t.category] += parseInt(t.amount);
+        });
+
+        const labels = [], data = [];
+        Object.entries(totals).forEach(([key, val]) => {
+            if (val > 0) {
+                const cat = categories.find(c => c.value === key);
+                if (cat) { labels.push(cat.name); data.push(val); }
             }
-            
-            // Faqat joriy oy uchun ma'lumotlarni filtrlash
-            const currentMonthTransactions = transactions.filter(t => {
-                const transactionDate = new Date(t.date);
-                return transactionDate.getMonth() === parseInt(currentMonth) && 
-                       transactionDate.getFullYear() === parseInt(currentYear);
-            });
-            
-            // Kategoriyalar bo'yicha chiqimlarni hisoblash
-            const categoryTotals = {};
-            
-            // Barcha kategoriyalar uchun 0 qiymatini belgilash
-            categories.forEach(category => {
-                categoryTotals[category.value] = 0;
-            });
-            
-            // Chiqimlarni hisoblash
-            currentMonthTransactions.filter(t => t.type === 'chiqim').forEach(transaction => {
-                if (categoryTotals.hasOwnProperty(transaction.category)) {
-                    categoryTotals[transaction.category] += parseInt(transaction.amount);
-                }
-            });
-            
-            // Faqat 0 dan katta bo'lgan kategoriyalarni ko'rsatish
-            const labels = [];
-            const data = [];
-            const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#8AC926', '#1982C4', '#6A4C93'];
-            
-            Object.entries(categoryTotals).forEach(([key, value], index) => {
-                if (value > 0) {
-                    const category = categories.find(c => c.value === key);
-                    if (category) {
-                        labels.push(category.name);
-                        data.push(value);
-                    }
-                }
-            });
-            
-            // Agar hech qanday ma'lumot bo'lmasa
-            if (labels.length === 0) {
-                labels.push('Ma\'lumot yo\'q');
-                data.push(1);
-                colors.length = 1;
-            }
-            
-            const chartData = {
-                labels: labels,
+        });
+
+        const colors = ['#00d4ff','#7c3aed','#10d48e','#ff4d6d','#fbbf24','#f97316','#06b6d4','#8b5cf6'];
+
+        if (!labels.length) { labels.push("Ma'lumot yo'q"); data.push(1); }
+
+        window.budgetChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels,
                 datasets: [{
-                    data: data,
+                    data,
                     backgroundColor: colors.slice(0, labels.length),
-                    borderWidth: 0
+                    borderWidth: 0,
+                    hoverOffset: 6
                 }]
-            };
-            
-            const options = {
+            },
+            options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                cutout: '68%',
                 plugins: {
                     legend: {
                         position: 'bottom',
                         labels: {
-                            font: {
-                                size: 12
-                            },
-                            padding: 20
+                            color: '#94a3b8',
+                            font: { size: 11, family: 'Sora' },
+                            padding: 16,
+                            boxWidth: 10,
+                            boxHeight: 10,
+                            borderRadius: 3
                         }
                     },
                     tooltip: {
+                        backgroundColor: '#1a2234',
+                        borderColor: 'rgba(255,255,255,0.08)',
+                        borderWidth: 1,
+                        titleColor: '#e2e8f0',
+                        bodyColor: '#94a3b8',
+                        padding: 12,
                         callbacks: {
-                            label: function(context) {
-                                return context.label + ': ' + context.raw.toLocaleString() + ' so\'m';
-                            }
+                            label: ctx => ` ${ctx.label}: ${ctx.raw.toLocaleString()} so'm`
                         }
                     }
                 }
-            };
-            
-            // Yangi chart yaratish
-            window.budgetChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: chartData,
-                options: options
-            });
-        }
+            }
+        });
+    }
 
-        // Balans va statistikani yangilash
-        function updateBalanceAndStats() {
-            // Joriy balans
-            const currentBalanceEl = document.getElementById('current-balance');
-            if (currentBalanceEl) {
-                currentBalanceEl.textContent = balance.toLocaleString() + ' so\'m';
-            }
-            
-            // Oylik chiqimlar (faqat joriy oy uchun)
-            const monthlyExpense = transactions
-                .filter(t => {
-                    const transactionDate = new Date(t.date);
-                    return t.type === 'chiqim' && 
-                           transactionDate.getMonth() === parseInt(currentMonth) && 
-                           transactionDate.getFullYear() === parseInt(currentYear);
-                })
-                .reduce((total, t) => total + parseInt(t.amount), 0);
-                
-            const monthlyExpenseEl = document.getElementById('monthly-expense');
-            if (monthlyExpenseEl) {
-                monthlyExpenseEl.textContent = monthlyExpense.toLocaleString() + ' so\'m';
-            }
-            
-            // Chartni yangilash
-            initChart();
-            
-            // Ma'lumotlarni saqlash
-            localStorage.setItem('transactions', JSON.stringify(transactions));
-            localStorage.setItem('balance', balance);
-            localStorage.setItem('currentMonth', currentMonth);
-            localStorage.setItem('currentYear', currentYear);
-        }
+    // ─── CUSTOM CONFIRM ───────────────────────────────────────────────────────
+    let _confirmCallback = null;
 
-        // Chiqimlarni yuklash va ko'rsatish
-        function loadExpenses() {
-            const expensesList = document.getElementById('expenses-list');
-            if (!expensesList) return;
-            
-            const activeFilterBtn = document.querySelector('.filter-btn.active');
-            const filter = activeFilterBtn ? activeFilterBtn.getAttribute('data-filter') : 'week';
-            const selectedCategory = categoryFilter ? categoryFilter.value : 'all';
-            
-            // Filtrlash
-            let filteredTransactions = [...transactions].reverse(); // Eng yangisi birinchi
-            
-            // Faqat joriy oy uchun ma'lumotlarni filtrlash
-            filteredTransactions = filteredTransactions.filter(t => {
-                const transactionDate = new Date(t.date);
-                return transactionDate.getMonth() === parseInt(currentMonth) && 
-                       transactionDate.getFullYear() === parseInt(currentYear);
-            });
-            
-            // Vaqt bo'yicha filtrlash
-            if (filter === 'week') {
-                const oneWeekAgo = new Date();
-                oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-                filteredTransactions = filteredTransactions.filter(t => new Date(t.date) >= oneWeekAgo);
-            } else if (filter === 'month') {
-                // Bu holda joriy oy ma'lumotlari ko'rsatiladi
-                // Hech qanday qo'shimcha filtrlash kerak emas
-            }
-            
-            // Kategoriya bo'yicha filtrlash
-            if (selectedCategory !== 'all') {
-                filteredTransactions = filteredTransactions.filter(t => t.category === selectedCategory);
-            }
-            
-            if (filteredTransactions.length === 0) {
-                expensesList.innerHTML = '<div class="loading">Hech qanday operatsiya topilmadi</div>';
-                return;
-            }
-            
-            let html = '';
-            filteredTransactions.forEach(transaction => {
-                const amountClass = transaction.type === 'kirim' ? 'expense-income' : 'expense-outcome';
-                const amountSign = transaction.type === 'kirim' ? '+' : '-';
-                
-                // Kategoriya nomini topish
-                const category = categories.find(c => c.value === transaction.category);
-                const categoryText = category ? category.name : transaction.category;
-                
-                html += `
-                    <div class="expense-item">
-                        <div class="expense-info">
-                            <div class="expense-title">${transaction.reason}</div>
-                            <div class="expense-details">
-                                <span>${new Date(transaction.date).toLocaleDateString()}</span>
-                                <span class="expense-category">${categoryText}</span>
-                            </div>
-                        </div>
-                        <div class="expense-amount ${amountClass}">
-                            ${amountSign}${parseInt(transaction.amount).toLocaleString()} so'm
-                        </div>
-                        <div class="expense-actions">
-                            <button class="action-btn edit-btn" data-id="${transaction.id}">Tahrir</button>
-                            <button class="action-btn delete-btn" data-id="${transaction.id}">O'chir</button>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            expensesList.innerHTML = html;
-            
-            // Tahrirlash va o'chirish tugmalariga event listener qo'shish
-            document.querySelectorAll('.edit-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const id = parseInt(e.target.getAttribute('data-id'));
-                    editTransaction(id);
-                });
-            });
-            
-            document.querySelectorAll('.delete-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const id = parseInt(e.target.getAttribute('data-id'));
-                    deleteTransaction(id);
-                });
-            });
-        }
+    function customConfirm(message, onYes) {
+        document.getElementById('confirm-message').textContent = message;
+        _confirmCallback = onYes;
+        openModal('confirm-modal');
+    }
 
-        // Operatsiyani tahrirlash
-        function editTransaction(id) {
-            const transaction = transactions.find(t => t.id === id);
-            if (!transaction) return;
-            
-            // Modalni to'ldirish
-            document.getElementById('edit-amount').value = transaction.amount;
-            document.getElementById('edit-reason').value = transaction.reason;
-            document.getElementById('edit-category').value = transaction.category;
-            document.getElementById('edit-type').value = transaction.type;
-            
-            editingTransactionId = id;
-            editModal.style.display = 'flex';
-        }
-
-        // Operatsiyani o'chirish
-        function deleteTransaction(id) {
-            if (!confirm('Bu operatsiyani o\'chirishni istaysizmi?')) return;
-            
-            const transactionIndex = transactions.findIndex(t => t.id === id);
-            if (transactionIndex === -1) return;
-            
-            const transaction = transactions[transactionIndex];
-            
-            // Balansni tuzatish
-            if (transaction.type === 'chiqim') {
-                balance += parseInt(transaction.amount);
-            } else {
-                balance -= parseInt(transaction.amount);
-            }
-            
-            // Operatsiyani o'chirish
-            transactions.splice(transactionIndex, 1);
-            
-            // UI ni yangilash
-            updateBalanceAndStats();
-            loadExpenses();
-            showNotification('Operatsiya muvaffaqiyatli o\'chirildi!');
-        }
-
-        // Yangi operatsiya qo'shish
-        function addTransaction() {
-            const amount = document.getElementById('amount').value;
-            const reason = document.getElementById('reason').value;
-            const category = document.getElementById('category').value;
-            const type = document.getElementById('type').value;
-            
-            if (!amount || !reason) {
-                showNotification('Iltimos, summa va sababni kiriting!', false);
-                return;
-            }
-            
-            // Yangi operatsiya yaratish
-            const newTransaction = {
-                id: Date.now(),
-                amount: amount,
-                reason: reason,
-                category: category,
-                type: type,
-                date: new Date().toISOString()
-            };
-            
-            // Balansni yangilash
-            if (type === 'chiqim') {
-                balance -= parseInt(amount);
-            } else {
-                balance += parseInt(amount);
-            }
-            
-            // Operatsiyani qo'shish
-            transactions.push(newTransaction);
-            
-            // UI ni yangilash
-            updateBalanceAndStats();
-            showNotification('Operatsiya muvaffaqiyatli qo\'shildi!');
-            
-            // Formani tozalash
-            document.getElementById('amount').value = '';
-            document.getElementById('reason').value = '';
-        }
-
-        // Chartni 0 ga tushirish
-        function resetChart() {
-            if (!confirm('Chartni 0 ga tushirishni istaysizmi? Bu faqat joriy oy ma\'lumotlarini tozalaydi.')) return;
-            
-            // Faqat joriy oy operatsiyalarini o'chirish
+    // ─── MANAGEMENT ───────────────────────────────────────────────────────────
+    function resetChart() {
+        customConfirm('Joriy oy ma\'lumotlarini tozalashni istaysizmi?', () => {
             transactions = transactions.filter(t => {
-                const transactionDate = new Date(t.date);
-                return !(transactionDate.getMonth() === parseInt(currentMonth) && 
-                        transactionDate.getFullYear() === parseInt(currentYear));
+                const d = new Date(t.date);
+                return !(d.getMonth() === currentMonth && d.getFullYear() === currentYear);
             });
-            
-            // Balansni qayta hisoblash
-            balance = transactions.reduce((total, t) => {
-                return t.type === 'kirim' ? total + parseInt(t.amount) : total - parseInt(t.amount);
-            }, 0);
-            
+            balance = transactions.reduce((s, t) => t.type === 'kirim' ? s + parseInt(t.amount) : s - parseInt(t.amount), 0);
+            saveData();
             updateBalanceAndStats();
-            showNotification('Chart muvaffaqiyatli 0 ga tushirildi!');
-        }
+            showToast('Joriy oy tozalandi!');
+        });
+    }
 
-        // Yangi oy boshlash
-        function resetMonth() {
-            if (!confirm('Yangi oy boshlashni istaysizmi? Joriy oy ma\'lumotlari saqlanib qoladi.')) return;
-            
-            // Oyni yangilash
+    function resetMonth() {
+        customConfirm('Yangi oy boshlashni istaysizmi?', () => {
             const now = new Date();
             currentMonth = now.getMonth();
             currentYear = now.getFullYear();
-            
+            updateMonthBadge();
+            saveData();
             updateBalanceAndStats();
-            showNotification('Yangi oy muvaffaqiyatli boshlandi!');
-        }
+            showToast('Yangi oy boshlandi!');
+        });
+    }
 
-        // Barchasini tozalash
-        function resetAll() {
-            if (!confirm('Barcha ma\'lumotlarni tozalashni istaysizmi? Bu amalni bekor qilib bo\'lmaydi.')) return;
-            
-            transactions = [];
-            balance = 0;
+    function resetAll() {
+        customConfirm('Barcha ma\'lumotlarni o\'chirishni istaysizmi? Bu amalni bekor qilib bo\'lmaydi.', () => {
+            transactions = []; balance = 0;
             currentMonth = new Date().getMonth();
             currentYear = new Date().getFullYear();
-            
+            updateMonthBadge();
+            saveData();
             updateBalanceAndStats();
             loadExpenses();
-            showNotification('Barcha ma\'lumotlar tozalandi!');
-        }
+            showToast('Barcha ma\'lumotlar tozalandi!');
+        });
+    }
 
-        // Ma'lumotlarni nusxalash
-        function copyData() {
-            if (transactions.length === 0) {
-                showNotification('Nusxalash uchun ma\'lumot yo\'q!', false);
-                return;
-            }
-            
-            try {
-                const textContent = generateTXT();
-                
-                // Nusxalash
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(textContent).then(() => {
-                        showNotification('✅ Ma\'lumotlar nusxalandi! Endi xabarga joylashtirishingiz mumkin');
-                    }).catch(err => {
-                        fallbackCopy(textContent);
-                    });
-                } else {
-                    fallbackCopy(textContent);
-                }
-                
-            } catch (error) {
-                showNotification('Xatolik yuz berdi: ' + error.message, false);
-            }
-        }
+    // ─── EXPORT ───────────────────────────────────────────────────────────────
+    function generateCSV() {
+        let csv = 'Sana,Sabab,Summa,Tur,Kategoriya\n';
+        [...transactions].sort((a,b) => new Date(b.date)-new Date(a.date)).forEach(t => {
+            const cat = categories.find(c => c.value === t.category);
+            csv += `"${new Date(t.date).toLocaleDateString('uz-UZ')}","${t.reason}","${t.amount}","${t.type === 'chiqim' ? 'Chiqim' : 'Kirim'}","${cat ? cat.name : t.category}"\n`;
+        });
+        return csv;
+    }
 
-        // Ma'lumotlarni yuklab olish
-        function downloadData() {
-            if (transactions.length === 0) {
-                showNotification('Yuklab olish uchun ma\'lumot yo\'q!', false);
-                return;
-            }
-            
-            try {
-                const fileFormat = fileFormatSelect.value;
-                let content, filename, mimeType;
-                
-                switch(fileFormat) {
-                    case 'csv':
-                        content = generateCSV();
-                        filename = `budjet_ma'lumotlari_${new Date().toISOString().slice(0, 10)}.csv`;
-                        mimeType = 'text/csv;charset=utf-8;';
-                        break;
-                    case 'json':
-                        content = generateJSON();
-                        filename = `budjet_ma'lumotlari_${new Date().toISOString().slice(0, 10)}.json`;
-                        mimeType = 'application/json;charset=utf-8;';
-                        break;
-                    case 'txt':
-                    default:
-                        content = generateTXT();
-                        filename = `budjet_ma'lumotlari_${new Date().toISOString().slice(0, 10)}.txt`;
-                        mimeType = 'text/plain;charset=utf-8;';
-                }
-                
-                downloadFile(content, filename, mimeType);
-                showNotification(`✅ Ma'lumotlar ${fileFormat.toUpperCase()} formatida yuklab olindi!`);
-                
-            } catch (error) {
-                showNotification('Xatolik yuz berdi: ' + error.message, false);
-            }
-        }
+    function generateTXT() {
+        let txt = `📊 Budjet Ma'lumotlari\n${'═'.repeat(38)}\n\n`;
+        txt += `💰 Balans: ${balance.toLocaleString()} so'm\n`;
+        txt += `📝 Operatsiyalar: ${transactions.length} ta\n\n`;
+        const income = transactions.filter(t=>t.type==='kirim').reduce((s,t)=>s+parseInt(t.amount),0);
+        const expense = transactions.filter(t=>t.type==='chiqim').reduce((s,t)=>s+parseInt(t.amount),0);
+        txt += `⬆️ Kirim: ${income.toLocaleString()} so'm\n⬇️ Chiqim: ${expense.toLocaleString()} so'm\n\n`;
+        [...transactions].sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach((t,i) => {
+            const cat = categories.find(c=>c.value===t.category);
+            txt += `${i+1}. ${new Date(t.date).toLocaleDateString('uz-UZ')} — ${t.reason}\n`;
+            txt += `   ${t.type==='chiqim'?'⬇️':'⬆️'} ${parseInt(t.amount).toLocaleString()} so'm (${cat?cat.name:t.category})\n\n`;
+        });
+        return txt;
+    }
 
-        // CSV formatida ma'lumot yaratish
-        function generateCSV() {
-            let csv = 'Sana,Sabab,Summa,Tur,Kategoriya\n';
-            
-            // Operatsiyalarni sanasi bo'yicha tartiblash (eng yangisi birinchi)
-            const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
-            
-            sortedTransactions.forEach(transaction => {
-                const date = new Date(transaction.date).toLocaleDateString('uz-UZ');
-                const typeText = transaction.type === 'chiqim' ? 'Chiqim' : 'Kirim';
-                
-                // Kategoriya nomini topish
-                const category = categories.find(c => c.value === transaction.category);
-                const categoryText = category ? category.name : transaction.category;
-                
-                // CSV formatida qator yaratish (vergul bilan ajratilgan)
-                csv += `"${date}","${transaction.reason}","${transaction.amount}","${typeText}","${categoryText}"\n`;
-            });
-            
-            return csv;
-        }
+    function generateJSON() {
+        return JSON.stringify({ exportDate: new Date().toISOString(), balance, categories, transactions }, null, 2);
+    }
 
-        // JSON formatida ma'lumot yaratish
-        function generateJSON() {
-            const data = {
-                exportDate: new Date().toISOString(),
-                balance: balance,
-                currentMonth: currentMonth,
-                currentYear: currentYear,
-                categories: categories,
-                transactions: transactions
-            };
-            
-            return JSON.stringify(data, null, 2);
-        }
+    function downloadData() {
+        if (!transactions.length) { showToast('Yuklab olish uchun ma\'lumot yo\'q!', 'error'); return; }
+        const fmt = document.getElementById('file-format').value;
+        const map = {
+            csv: [generateCSV(), `budjet_${new Date().toISOString().slice(0,10)}.csv`, 'text/csv;charset=utf-8;'],
+            json: [generateJSON(), `budjet_${new Date().toISOString().slice(0,10)}.json`, 'application/json'],
+            txt: [generateTXT(), `budjet_${new Date().toISOString().slice(0,10)}.txt`, 'text/plain']
+        };
+        const [content, filename, mime] = map[fmt];
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(new Blob([content], { type: mime }));
+        link.download = filename;
+        link.click();
+        showToast(`${fmt.toUpperCase()} formatida yuklandi!`);
+    }
 
-        // TXT formatida ma'lumot yaratish
-        function generateTXT() {
-            let textContent = "📊 Mening Budjet Ma'lumotlarim\n\n";
-            textContent += "=".repeat(40) + "\n\n";
-            
-            // Umumiy statistikalar
-            textContent += "📈 Umumiy Statistikalar:\n";
-            textContent += `💰 Jami balans: ${balance.toLocaleString()} so'm\n`;
-            textContent += `📝 Jami operatsiyalar: ${transactions.length} ta\n\n`;
-            
-            // Kirim/chiqim statistikasi
-            const totalIncome = transactions
-                .filter(t => t.type === 'kirim')
-                .reduce((sum, t) => sum + parseInt(t.amount), 0);
-                
-            const totalExpense = transactions
-                .filter(t => t.type === 'chiqim')
-                .reduce((sum, t) => sum + parseInt(t.amount), 0);
-            
-            textContent += `⬆️ Jami kirim: ${totalIncome.toLocaleString()} so'm\n`;
-            textContent += `⬇️ Jami chiqim: ${totalExpense.toLocaleString()} so'm\n\n`;
-            
-            // Kategoriyalar bo'yicha chiqimlar
-            textContent += "📂 Kategoriyalar bo'yicha chiqimlar:\n";
-            const categoryTotals = {};
-            transactions
-                .filter(t => t.type === 'chiqim')
-                .forEach(t => {
-                    categoryTotals[t.category] = (categoryTotals[t.category] || 0) + parseInt(t.amount);
-                });
-            
-            Object.entries(categoryTotals).forEach(([categoryValue, amount]) => {
-                const category = categories.find(c => c.value === categoryValue);
-                const categoryName = category ? category.name : categoryValue;
-                textContent += `  • ${categoryName}: ${amount.toLocaleString()} so'm\n`;
-            });
-            textContent += "\n";
-            
-            // Barcha operatsiyalar
-            textContent += "📋 Barcha Operatsiyalar:\n";
-            textContent += "-".repeat(40) + "\n";
-            
-            // Operatsiyalarni sanasi bo'yicha tartiblash (eng yangisi birinchi)
-            const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
-            
-            sortedTransactions.forEach((transaction, index) => {
-                const typeText = transaction.type === 'chiqim' ? '⬇️ Chiqim' : '⬆️ Kirim';
-                const date = new Date(transaction.date).toLocaleDateString('uz-UZ');
-                
-                // Kategoriya nomini topish
-                const category = categories.find(c => c.value === transaction.category);
-                const categoryText = category ? category.name : transaction.category;
-                
-                textContent += `${index + 1}. ${date} - ${transaction.reason}\n`;
-                textContent += `   ${typeText}: ${parseInt(transaction.amount).toLocaleString()} so'm (${categoryText})\n\n`;
-            });
-            
-            return textContent;
-        }
+    function copyData() {
+        if (!transactions.length) { showToast('Nusxalash uchun ma\'lumot yo\'q!', 'error'); return; }
+        const text = generateTXT();
+        navigator.clipboard?.writeText(text)
+            .then(() => showToast('Ma\'lumotlar nusxalandi! ✓'))
+            .catch(() => showToast('Nusxalash muvaffaqiyatsiz', 'error'));
+    }
 
-        // Faylni yuklab olish
-        function downloadFile(content, filename, mimeType) {
-            const blob = new Blob([content], { type: mimeType });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-        }
-
-        // Qo'shimcha nusxalash usuli
-        function fallbackCopy(text) {
-            const textArea = document.createElement('textarea');
-            textArea.value = text;
-            textArea.style.position = 'fixed';
-            textArea.style.left = '-999999px';
-            textArea.style.top = '-999999px';
-            document.body.appendChild(textArea);
-            textArea.focus();
-            textArea.select();
-            
-            try {
-                document.execCommand('copy');
-                showNotification('✅ Ma\'lumotlar nusxalandi! Endi xabarga joylashtirishingiz mumkin');
-            } catch (err) {
-                showNotification('❌ Nusxalash muvaffaqiyatsiz. Qo\'lda nusxalab oling', false);
-                // Agar nusxalash ishlamasa, matnni ko'rsatish
-                showTextModal(text);
-            }
-            
-            document.body.removeChild(textArea);
-        }
-
-        // Matnni modalda ko'rsatish (agar nusxalash ishlamasa)
-        function showTextModal(text) {
-            const modal = document.createElement('div');
-            modal.style.cssText = `
-                position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-                background: rgba(0,0,0,0.8); z-index: 10000; display: flex; 
-                align-items: center; justify-content: center; padding: 20px;
-            `;
-            
-            modal.innerHTML = `
-                <div style="background: white; padding: 20px; border-radius: 10px; max-width: 500px; width: 100%; max-height: 80vh; overflow: auto;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <h3 style="margin: 0;">Ma'lumotlaringiz</h3>
-                        <button onclick="this.parentElement.parentElement.parentElement.remove()" style="background: none; border: none; font-size: 20px; cursor: pointer;">×</button>
-                    </div>
-                    <pre style="white-space: pre-wrap; font-family: system-ui; background: #f5f5f5; padding: 15px; border-radius: 5px; max-height: 60vh; overflow: auto;">${text}</pre>
-                    <button onclick="navigator.clipboard.writeText('${text.replace(/'/g, "\\'")}').then(() => alert('Nusxalandi!')).catch(() => alert('Xatolik!'));" 
-                            style="width: 100%; padding: 10px; background: #0088cc; color: white; border: none; border-radius: 5px; margin-top: 10px;">
-                        Nusxa olish
-                    </button>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
-            
-            // Modalni yopish
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.remove();
-                }
-            });
-        }
-
-        // Tahrirlangan operatsiyani saqlash
-        function saveEdit() {
-            const amount = document.getElementById('edit-amount').value;
-            const reason = document.getElementById('edit-reason').value;
-            const category = document.getElementById('edit-category').value;
-            const type = document.getElementById('edit-type').value;
-            
-            if (!amount || !reason) {
-                showNotification('Iltimos, barcha maydonlarni to\'ldiring!', false);
-                return;
-            }
-            
-            const transactionIndex = transactions.findIndex(t => t.id === editingTransactionId);
-            if (transactionIndex === -1) return;
-            
-            const oldTransaction = transactions[transactionIndex];
-            
-            // Avval eski operatsiyaning ta'sirini balansdan olib tashlaymiz
-            if (oldTransaction.type === 'chiqim') {
-                balance += parseInt(oldTransaction.amount);
-            } else {
-                balance -= parseInt(oldTransaction.amount);
-            }
-            
-            // Yangi operatsiyaning ta'sirini balansga qo'shamiz
-            if (type === 'chiqim') {
-                balance -= parseInt(amount);
-            } else {
-                balance += parseInt(amount);
-            }
-            
-            // Operatsiyani yangilash
-            transactions[transactionIndex] = {
-                ...oldTransaction,
-                amount: amount,
-                reason: reason,
-                category: category,
-                type: type
-            };
-            
-            // UI ni yangilash
-            updateBalanceAndStats();
-            loadExpenses();
-            editModal.style.display = 'none';
-            showNotification('Operatsiya muvaffaqiyatli tahrirlandi!');
-        }
-    </script>
+    // ─── PERSIST ──────────────────────────────────────────────────────────────
+    function saveData() {
+        localStorage.setItem('transactions', JSON.stringify(transactions));
+        localStorage.setItem('balance', balance);
+        localStorage.setItem('currentMonth', currentMonth);
+        localStorage.setItem('currentYear', currentYear);
+    }
+</script>
 </body>
 </html>
