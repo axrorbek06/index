@@ -1,1434 +1,957 @@
 <!DOCTYPE html>
 <html lang="uz">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mening Shaxsiy Budjetim</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg: #0a0e1a;
-            --surface: #111827;
-            --surface2: #1a2234;
-            --border: rgba(255,255,255,0.07);
-            --accent: #00d4ff;
-            --accent2: #7c3aed;
-            --green: #10d48e;
-            --red: #ff4d6d;
-            --yellow: #fbbf24;
-            --text: #e2e8f0;
-            --muted: #64748b;
-            --card-glow: rgba(0, 212, 255, 0.06);
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-            font-family: 'Sora', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* Background mesh */
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background:
-                radial-gradient(ellipse 60% 40% at 20% 10%, rgba(124,58,237,0.12) 0%, transparent 60%),
-                radial-gradient(ellipse 50% 50% at 80% 80%, rgba(0,212,255,0.08) 0%, transparent 60%);
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        .app-wrapper {
-            max-width: 460px;
-            margin: 0 auto;
-            padding: 0 0 40px 0;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* HEADER */
-        .header {
-            padding: 28px 20px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .header-left h1 {
-            font-size: 18px;
-            font-weight: 700;
-            letter-spacing: -0.3px;
-            color: #fff;
-        }
-
-        .header-left p {
-            font-size: 12px;
-            color: var(--muted);
-            margin-top: 2px;
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        .header-badge {
-            background: rgba(0,212,255,0.1);
-            border: 1px solid rgba(0,212,255,0.25);
-            color: var(--accent);
-            font-size: 11px;
-            font-family: 'JetBrains Mono', monospace;
-            padding: 5px 10px;
-            border-radius: 20px;
-            letter-spacing: 0.5px;
-        }
-
-        /* TABS */
-        .tabs {
-            display: flex;
-            margin: 16px 16px 0;
-            background: var(--surface);
-            border-radius: 14px;
-            padding: 4px;
-            border: 1px solid var(--border);
-        }
-
-        .tab {
-            flex: 1;
-            padding: 9px 6px;
-            text-align: center;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--muted);
-            border-radius: 10px;
-            transition: all 0.25s ease;
-            letter-spacing: 0.2px;
-        }
-
-        .tab.active {
-            background: var(--surface2);
-            color: var(--accent);
-            box-shadow: 0 0 0 1px rgba(0,212,255,0.2);
-        }
-
-        /* CONTENT */
-        .content { padding: 16px; }
-
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
-
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* CARDS */
-        .card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 14px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: var(--card-glow);
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .card:hover::before { opacity: 1; }
-
-        /* BALANCE CARD */
-        .balance-card {
-            background: linear-gradient(135deg, #0f1f3d 0%, #1a1035 50%, #0f2030 100%);
-            border: 1px solid rgba(0,212,255,0.15);
-            text-align: center;
-            padding: 28px 20px;
-        }
-
-        .balance-card::after {
-            content: '';
-            position: absolute;
-            top: -40px; right: -40px;
-            width: 140px; height: 140px;
-            background: radial-gradient(circle, rgba(0,212,255,0.15) 0%, transparent 70%);
-            pointer-events: none;
-        }
-
-        .balance-label {
-            font-size: 11px;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            font-family: 'JetBrains Mono', monospace;
-            margin-bottom: 10px;
-        }
-
-        .balance-amount {
-            font-size: 36px;
-            font-weight: 700;
-            color: #fff;
-            letter-spacing: -1.5px;
-            line-height: 1;
-            margin-bottom: 6px;
-        }
-
-        .balance-amount span {
-            font-size: 18px;
-            color: var(--accent);
-            font-weight: 400;
-        }
-
-        .balance-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 12px;
-            color: var(--green);
-            background: rgba(16,212,142,0.1);
-            padding: 4px 10px;
-            border-radius: 20px;
-            margin-top: 8px;
-        }
-
-        /* STAT ROW */
-        .stat-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 14px;
-        }
-
-        .stat-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 16px;
-        }
-
-        .stat-label {
-            font-size: 11px;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-family: 'JetBrains Mono', monospace;
-            margin-bottom: 8px;
-        }
-
-        .stat-value {
-            font-size: 20px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-        }
-
-        .stat-value.income { color: var(--green); }
-        .stat-value.expense { color: var(--red); }
-
-        /* CHART */
-        .chart-container {
-            position: relative;
-            height: 220px;
-        }
-
-        .section-title {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-family: 'JetBrains Mono', monospace;
-            margin-bottom: 14px;
-        }
-
-        /* FILTER */
-        .filter-row {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 14px;
-            flex-wrap: wrap;
-        }
-
-        .filter-btn {
-            padding: 7px 14px;
-            border: 1px solid var(--border);
-            background: var(--surface2);
-            color: var(--muted);
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 12px;
-            font-family: 'Sora', sans-serif;
-            transition: all 0.2s;
-        }
-
-        .filter-btn.active {
-            border-color: rgba(0,212,255,0.4);
-            color: var(--accent);
-            background: rgba(0,212,255,0.08);
-        }
-
-        .filter-select {
-            padding: 7px 12px;
-            border: 1px solid var(--border);
-            background: var(--surface2);
-            color: var(--text);
-            border-radius: 8px;
-            font-size: 12px;
-            font-family: 'Sora', sans-serif;
-            cursor: pointer;
-            flex: 1;
-            min-width: 130px;
-        }
-
-        /* TRANSACTION ITEMS */
-        .tx-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 13px 0;
-            border-bottom: 1px solid var(--border);
-            animation: fadeUp 0.3s ease;
-        }
-
-        .tx-item:last-child { border-bottom: none; }
-
-        .tx-icon {
-            width: 38px;
-            height: 38px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            flex-shrink: 0;
-        }
-
-        .tx-icon.income { background: rgba(16,212,142,0.12); }
-        .tx-icon.expense { background: rgba(255,77,109,0.12); }
-
-        .tx-info { flex: 1; min-width: 0; }
-
-        .tx-title {
-            font-size: 14px;
-            font-weight: 500;
-            color: #fff;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .tx-meta {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-top: 3px;
-        }
-
-        .tx-date {
-            font-size: 11px;
-            color: var(--muted);
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        .tx-cat {
-            font-size: 10px;
-            color: var(--accent);
-            background: rgba(0,212,255,0.1);
-            padding: 2px 7px;
-            border-radius: 4px;
-        }
-
-        .tx-right { text-align: right; flex-shrink: 0; }
-
-        .tx-amount {
-            font-size: 15px;
-            font-weight: 700;
-            letter-spacing: -0.3px;
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        .tx-amount.income { color: var(--green); }
-        .tx-amount.expense { color: var(--red); }
-
-        .tx-actions {
-            display: flex;
-            gap: 5px;
-            margin-top: 4px;
-        }
-
-        .action-btn {
-            padding: 3px 8px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 10px;
-            font-family: 'Sora', sans-serif;
-            transition: all 0.2s;
-        }
-
-        .edit-btn { background: rgba(251,191,36,0.15); color: var(--yellow); }
-        .delete-btn { background: rgba(255,77,109,0.15); color: var(--red); }
-        .edit-btn:hover { background: rgba(251,191,36,0.3); }
-        .delete-btn:hover { background: rgba(255,77,109,0.3); }
-
-        /* FORMS */
-        .form-group { margin-bottom: 14px; }
-
-        .form-label {
-            display: block;
-            font-size: 11px;
-            font-weight: 500;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-family: 'JetBrains Mono', monospace;
-            margin-bottom: 7px;
-        }
-
-        .form-input, .form-select {
-            width: 100%;
-            padding: 12px 14px;
-            background: var(--surface2);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            color: var(--text);
-            font-size: 15px;
-            font-family: 'Sora', sans-serif;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        .form-input:focus, .form-select:focus {
-            outline: none;
-            border-color: rgba(0,212,255,0.4);
-            box-shadow: 0 0 0 3px rgba(0,212,255,0.06);
-        }
-
-        .form-input::placeholder { color: var(--muted); }
-
-        /* TYPE TOGGLE */
-        .type-toggle {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
-
-        .type-option {
-            padding: 11px;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            text-align: center;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 500;
-            transition: all 0.2s;
-            color: var(--muted);
-        }
-
-        .type-option[data-val="chiqim"].selected {
-            border-color: rgba(255,77,109,0.5);
-            background: rgba(255,77,109,0.1);
-            color: var(--red);
-        }
-
-        .type-option[data-val="kirim"].selected {
-            border-color: rgba(16,212,142,0.5);
-            background: rgba(16,212,142,0.1);
-            color: var(--green);
-        }
-
-        /* BUTTONS */
-        .btn {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            font-family: 'Sora', sans-serif;
-            transition: all 0.2s;
-            letter-spacing: 0.3px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--accent), #0099cc);
-            color: #000;
-            box-shadow: 0 4px 20px rgba(0,212,255,0.25);
-        }
-
-        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 25px rgba(0,212,255,0.35); }
-
-        .btn-success {
-            background: linear-gradient(135deg, var(--green), #0da86f);
-            color: #000;
-        }
-
-        .btn-danger {
-            background: rgba(255,77,109,0.1);
-            color: var(--red);
-            border: 1px solid rgba(255,77,109,0.25);
-        }
-
-        .btn-danger:hover { background: rgba(255,77,109,0.2); }
-
-        .btn-warning {
-            background: rgba(251,191,36,0.1);
-            color: var(--yellow);
-            border: 1px solid rgba(251,191,36,0.25);
-            margin-bottom: 8px;
-        }
-
-        .btn-outline {
-            background: transparent;
-            color: var(--accent);
-            border: 1px solid rgba(0,212,255,0.25);
-        }
-
-        .btn-outline:hover { background: rgba(0,212,255,0.05); }
-
-        .btn-sm { padding: 10px 14px; font-size: 13px; margin-bottom: 8px; }
-
-        /* MANAGEMENT */
-        .mgmt-grid { display: grid; gap: 8px; }
-
-        /* CATEGORY ITEMS */
-        .cat-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 0;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .cat-item:last-child { border-bottom: none; }
-
-        .cat-name {
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--text);
-        }
-
-        .cat-actions { display: flex; gap: 6px; }
-
-        /* DOWNLOAD */
-        .dl-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-top: 8px;
-        }
-
-        /* MODAL */
-        .modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.75);
-            z-index: 2000;
-            align-items: flex-end;
-            justify-content: center;
-            backdrop-filter: blur(4px);
-        }
-
-        .modal.open { display: flex; animation: fadeIn 0.2s ease; }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        .modal-sheet {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 20px 20px 0 0;
-            padding: 20px;
-            width: 100%;
-            max-width: 460px;
-            animation: slideUp 0.3s ease;
-        }
-
-        @keyframes slideUp {
-            from { transform: translateY(100%); }
-            to { transform: translateY(0); }
-        }
-
-        .modal-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-
-        .modal-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: #fff;
-        }
-
-        .modal-close {
-            background: var(--surface2);
-            border: 1px solid var(--border);
-            color: var(--muted);
-            width: 28px;
-            height: 28px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* NOTIFICATION */
-        .toast {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%) translateY(20px);
-            background: var(--surface2);
-            border: 1px solid var(--border);
-            color: var(--text);
-            padding: 12px 20px;
-            border-radius: 12px;
-            font-size: 13px;
-            white-space: nowrap;
-            opacity: 0;
-            transition: all 0.3s ease;
-            z-index: 9999;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-        }
-
-        .toast.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
-
-        .toast.success { border-color: rgba(16,212,142,0.4); color: var(--green); }
-        .toast.error { border-color: rgba(255,77,109,0.4); color: var(--red); }
-
-        /* EMPTY STATE */
-        .empty {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--muted);
-            font-size: 13px;
-        }
-
-        .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.5; }
-
-        /* DIVIDER */
-        .divider {
-            height: 1px;
-            background: var(--border);
-            margin: 16px 0;
-        }
-
-        /* CLICKABLE CARD */
-        .clickable-card {
-            cursor: pointer;
-            transition: border-color 0.2s, transform 0.15s;
-        }
-        .clickable-card:hover {
-            border-color: rgba(0,212,255,0.35);
-            transform: translateY(-2px);
-        }
-        .clickable-card:active { transform: translateY(0); }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Axrorbek — Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════
+   SHARED
+═══════════════════════════════════════════════ */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{height:100%;}
+body{
+  min-height:100vh;min-height:100dvh;
+  overflow-x:hidden;
+  /* iPhone safe area */
+  padding-top:env(safe-area-inset-top);
+}
+
+/* APP SWITCHER — Tasks bottomnav ustida, Finance'da pastda */
+.app-switcher{
+  position:fixed;
+  bottom:calc(16px + env(safe-area-inset-bottom));
+  left:16px;
+  z-index:9000;
+  display:flex;flex-direction:column;align-items:flex-start;gap:8px;
+  transition:bottom .2s;
+}
+.app-switcher.over-nav{
+  bottom:calc(64px + env(safe-area-inset-bottom));
+}
+.switcher-btn{
+  display:flex;align-items:center;gap:8px;
+  padding:11px 16px;
+  border:none;border-radius:14px;
+  cursor:pointer;font-size:13px;font-weight:600;
+  transition:all .25s;
+  white-space:nowrap;
+  box-shadow:0 4px 20px rgba(0,0,0,0.5);
+  /* touch feedback */
+  -webkit-user-select:none;user-select:none;
+}
+.switcher-btn .sw-icon{font-size:16px;}
+.switcher-btn.to-tasks{background:linear-gradient(135deg,#4f8fff,#3066cc);color:#fff;}
+.switcher-btn.to-finance{background:linear-gradient(135deg,#00d4ff,#0099cc);color:#000;}
+.switcher-btn:active{transform:scale(0.94);opacity:0.9;}
+
+/* Page wrapper */
+.app-page{display:none;}
+.app-page.active{display:block;}
+
+/* ═══════════════════════════════════════════════
+   FINANCE APP
+═══════════════════════════════════════════════ */
+#finance-app{
+  font-family:'Sora',sans-serif;
+  background:#0a0e1a;
+  color:#e2e8f0;
+}
+#finance-app .app-wrapper{max-width:460px;margin:0 auto;padding:0 0 calc(100px + env(safe-area-inset-bottom)) 0;position:relative;z-index:1;}
+#finance-app::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 40% at 20% 10%,rgba(124,58,237,0.12) 0%,transparent 60%),radial-gradient(ellipse 50% 50% at 80% 80%,rgba(0,212,255,0.08) 0%,transparent 60%);pointer-events:none;z-index:0;}
+
+#finance-app .header{padding:28px 20px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.07);}
+#finance-app .header-left h1{font-size:18px;font-weight:700;letter-spacing:-0.3px;color:#fff;}
+#finance-app .header-left p{font-size:12px;color:#64748b;margin-top:2px;font-family:'JetBrains Mono',monospace;}
+#finance-app .header-badge{background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.25);color:#00d4ff;font-size:11px;font-family:'JetBrains Mono',monospace;padding:5px 10px;border-radius:20px;letter-spacing:0.5px;}
+
+#finance-app .tabs{display:flex;margin:16px 16px 0;background:#111827;border-radius:14px;padding:4px;border:1px solid rgba(255,255,255,0.07);}
+#finance-app .tab{flex:1;padding:9px 6px;text-align:center;cursor:pointer;font-size:12px;font-weight:500;color:#64748b;border-radius:10px;transition:all .25s;letter-spacing:0.2px;}
+#finance-app .tab.active{background:#1a2234;color:#00d4ff;box-shadow:0 0 0 1px rgba(0,212,255,0.2);}
+#finance-app .content{padding:16px;}
+#finance-app .tab-content{display:none;}
+#finance-app .tab-content.active{display:block;animation:fadeUp .3s ease;}
+
+#finance-app .card{background:#111827;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:20px;margin-bottom:14px;position:relative;overflow:hidden;}
+#finance-app .balance-card{background:linear-gradient(135deg,#0f1f3d 0%,#1a1035 50%,#0f2030 100%);border:1px solid rgba(0,212,255,0.15);text-align:center;padding:28px 20px;}
+#finance-app .balance-label{font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1.5px;font-family:'JetBrains Mono',monospace;margin-bottom:10px;}
+#finance-app .balance-amount{font-size:36px;font-weight:700;color:#fff;letter-spacing:-1.5px;line-height:1;margin-bottom:6px;}
+#finance-app .balance-amount span{font-size:18px;color:#00d4ff;font-weight:400;}
+#finance-app .balance-indicator{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#10d48e;background:rgba(16,212,142,0.1);padding:4px 10px;border-radius:20px;margin-top:8px;}
+
+#finance-app .stat-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+#finance-app .stat-card{background:#111827;border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:16px;}
+#finance-app .stat-label{font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px;font-family:'JetBrains Mono',monospace;margin-bottom:8px;}
+#finance-app .stat-value{font-size:20px;font-weight:700;letter-spacing:-0.5px;}
+#finance-app .chart-container{position:relative;height:220px;}
+#finance-app .section-title{font-size:13px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:1px;font-family:'JetBrains Mono',monospace;margin-bottom:14px;}
+
+#finance-app .filter-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+#finance-app .filter-btn{padding:7px 14px;border:1px solid rgba(255,255,255,0.07);background:#1a2234;color:#64748b;border-radius:8px;cursor:pointer;font-size:12px;font-family:'Sora',sans-serif;transition:all .2s;}
+#finance-app .filter-btn.active{border-color:rgba(0,212,255,0.4);color:#00d4ff;background:rgba(0,212,255,0.08);}
+#finance-app .filter-select{padding:7px 12px;border:1px solid rgba(255,255,255,0.07);background:#1a2234;color:#e2e8f0;border-radius:8px;font-size:12px;font-family:'Sora',sans-serif;cursor:pointer;flex:1;min-width:130px;}
+
+#finance-app .tx-item{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid rgba(255,255,255,0.07);}
+#finance-app .tx-item:last-child{border-bottom:none;}
+#finance-app .tx-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+#finance-app .tx-icon.income{background:rgba(16,212,142,0.12);}
+#finance-app .tx-icon.expense{background:rgba(255,77,109,0.12);}
+#finance-app .tx-info{flex:1;min-width:0;}
+#finance-app .tx-title{font-size:14px;font-weight:500;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#finance-app .tx-meta{display:flex;align-items:center;gap:6px;margin-top:3px;}
+#finance-app .tx-date{font-size:11px;color:#64748b;font-family:'JetBrains Mono',monospace;}
+#finance-app .tx-cat{font-size:10px;color:#00d4ff;background:rgba(0,212,255,0.1);padding:2px 7px;border-radius:4px;}
+#finance-app .tx-right{text-align:right;flex-shrink:0;}
+#finance-app .tx-amount{font-size:15px;font-weight:700;letter-spacing:-0.3px;font-family:'JetBrains Mono',monospace;}
+#finance-app .tx-amount.income{color:#10d48e;}
+#finance-app .tx-amount.expense{color:#ff4d6d;}
+#finance-app .tx-actions{display:flex;gap:5px;margin-top:4px;}
+#finance-app .action-btn{padding:3px 8px;border:none;border-radius:5px;cursor:pointer;font-size:10px;font-family:'Sora',sans-serif;transition:all .2s;}
+#finance-app .edit-btn{background:rgba(251,191,36,0.15);color:#fbbf24;}
+#finance-app .delete-btn{background:rgba(255,77,109,0.15);color:#ff4d6d;}
+
+#finance-app .form-group{margin-bottom:14px;}
+#finance-app .form-label{display:block;font-size:11px;font-weight:500;color:#64748b;text-transform:uppercase;letter-spacing:1px;font-family:'JetBrains Mono',monospace;margin-bottom:7px;}
+#finance-app .form-input,#finance-app .form-select{width:100%;padding:12px 14px;background:#1a2234;border:1px solid rgba(255,255,255,0.07);border-radius:10px;color:#e2e8f0;font-size:15px;font-family:'Sora',sans-serif;transition:border-color .2s;}
+#finance-app .form-input:focus,#finance-app .form-select:focus{outline:none;border-color:rgba(0,212,255,0.4);box-shadow:0 0 0 3px rgba(0,212,255,0.06);}
+#finance-app .form-input::placeholder{color:#64748b;}
+#finance-app .type-toggle{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+#finance-app .type-option{padding:11px;border:1px solid rgba(255,255,255,0.07);border-radius:10px;text-align:center;cursor:pointer;font-size:13px;font-weight:500;transition:all .2s;color:#64748b;}
+#finance-app .type-option[data-val="chiqim"].selected{border-color:rgba(255,77,109,0.5);background:rgba(255,77,109,0.1);color:#ff4d6d;}
+#finance-app .type-option[data-val="kirim"].selected{border-color:rgba(16,212,142,0.5);background:rgba(16,212,142,0.1);color:#10d48e;}
+
+#finance-app .btn{width:100%;padding:14px;border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;transition:all .2s;letter-spacing:0.3px;}
+#finance-app .btn-primary{background:linear-gradient(135deg,#00d4ff,#0099cc);color:#000;box-shadow:0 4px 20px rgba(0,212,255,0.25);}
+#finance-app .btn-success{background:linear-gradient(135deg,#10d48e,#0da86f);color:#000;}
+#finance-app .btn-danger{background:rgba(255,77,109,0.1);color:#ff4d6d;border:1px solid rgba(255,77,109,0.25);}
+#finance-app .btn-warning{background:rgba(251,191,36,0.1);color:#fbbf24;border:1px solid rgba(251,191,36,0.25);margin-bottom:8px;}
+#finance-app .btn-outline{background:transparent;color:#00d4ff;border:1px solid rgba(0,212,255,0.25);}
+#finance-app .btn-sm{padding:10px 14px;font-size:13px;margin-bottom:8px;}
+#finance-app .mgmt-grid{display:grid;gap:8px;}
+#finance-app .cat-item{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.07);}
+#finance-app .cat-item:last-child{border-bottom:none;}
+#finance-app .cat-name{font-size:14px;font-weight:500;color:#e2e8f0;}
+#finance-app .cat-actions{display:flex;gap:6px;}
+#finance-app .dl-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+#finance-app .divider{height:1px;background:rgba(255,255,255,0.07);margin:16px 0;}
+#finance-app .empty{text-align:center;padding:40px 20px;color:#64748b;font-size:13px;}
+#finance-app .empty-icon{font-size:40px;margin-bottom:12px;opacity:0.5;}
+#finance-app .clickable-card{cursor:pointer;transition:border-color .2s,transform .15s;}
+#finance-app .clickable-card:hover{border-color:rgba(0,212,255,0.35);transform:translateY(-2px);}
+
+/* Finance modals */
+#finance-app .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:8000;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);}
+#finance-app .modal.open{display:flex;animation:fadeIn .2s ease;}
+#finance-app .modal-sheet{background:#111827;border:1px solid rgba(255,255,255,0.07);border-radius:20px 20px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom)) 20px;width:100%;max-width:460px;animation:slideUp .3s ease;max-height:90vh;overflow-y:auto;}
+#finance-app .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+#finance-app .modal-title{font-size:16px;font-weight:700;color:#fff;}
+#finance-app .modal-close{background:#1a2234;border:1px solid rgba(255,255,255,0.07);color:#64748b;width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+#finance-app .toast{position:fixed;bottom:calc(100px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%) translateY(20px);background:#1a2234;border:1px solid rgba(255,255,255,0.07);color:#e2e8f0;padding:12px 20px;border-radius:12px;font-size:13px;white-space:nowrap;opacity:0;transition:all .3s;z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,0.4);}
+#finance-app .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#finance-app .toast.success{border-color:rgba(16,212,142,0.4);color:#10d48e;}
+#finance-app .toast.error{border-color:rgba(255,77,109,0.4);color:#ff4d6d;}
+
+/* ═══════════════════════════════════════════════
+   TASKS APP
+═══════════════════════════════════════════════ */
+#tasks-app{
+  font-family:'Space Grotesk',sans-serif;
+  background:#080c14;
+  color:#dce6f5;
+}
+#tasks-app::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 50% at 15% 5%,rgba(79,143,255,0.07) 0%,transparent 60%),radial-gradient(ellipse 50% 60% at 85% 90%,rgba(123,94,167,0.07) 0%,transparent 60%);pointer-events:none;z-index:0;}
+#tasks-app .app{max-width:460px;margin:0 auto;position:relative;z-index:1;padding-bottom:calc(90px + env(safe-area-inset-bottom));}
+
+#tasks-app .bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:460px;background:rgba(8,12,20,0.96);border-top:1px solid rgba(255,255,255,0.1);backdrop-filter:blur(16px);display:flex;z-index:300;padding-bottom:env(safe-area-inset-bottom);}
+#tasks-app .bnav-item{flex:1;padding:10px 4px 12px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;transition:all .2s;border:none;background:transparent;color:#6b7fa0;font-family:'Space Grotesk',sans-serif;-webkit-tap-highlight-color:transparent;}
+#tasks-app .bnav-item.active{color:#4f8fff;}
+#tasks-app .bnav-icon{font-size:18px;line-height:1;}
+#tasks-app .bnav-label{font-size:10px;font-weight:500;letter-spacing:0.3px;}
+
+#tasks-app .date-nav{display:flex;align-items:center;justify-content:space-between;padding:18px 18px 14px;border-bottom:1px solid rgba(255,255,255,0.06);position:sticky;top:0;background:rgba(8,12,20,0.92);backdrop-filter:blur(12px);z-index:100;}
+#tasks-app .nav-arrow{width:36px;height:36px;border:none;background:#141c2e;color:#6b7fa0;border-radius:10px;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;transition:all .2s;user-select:none;}
+#tasks-app .nav-arrow:hover{background:#1a2440;color:#4f8fff;}
+#tasks-app .nav-arrow:active{transform:scale(0.92);}
+#tasks-app .date-center{text-align:center;cursor:pointer;user-select:none;padding:4px 12px;}
+#tasks-app .date-label{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:600;color:#fff;letter-spacing:0.5px;transition:color .2s;}
+#tasks-app .date-center:hover .date-label{color:#4f8fff;}
+#tasks-app .date-sub{font-size:10px;color:#4a5a78;margin-top:2px;letter-spacing:1px;text-transform:uppercase;}
+
+#tasks-app .progress-section{padding:14px 18px 0;}
+#tasks-app .progress-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+#tasks-app .progress-title{font-size:11px;color:#6b7fa0;letter-spacing:0.8px;text-transform:uppercase;font-family:'JetBrains Mono',monospace;}
+#tasks-app .progress-pct{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:#fff;transition:color .3s;}
+#tasks-app .progress-pct.c100{color:#22d07a;}
+#tasks-app .progress-pct.c60{color:#00c8e0;}
+#tasks-app .progress-pct.c30{color:#f5c542;}
+#tasks-app .progress-pct.c0{color:#ff5a6e;}
+#tasks-app .progress-track{height:6px;background:#1a2440;border-radius:10px;overflow:hidden;margin-bottom:6px;}
+#tasks-app .progress-fill{height:100%;border-radius:10px;transition:width .5s cubic-bezier(.4,0,.2,1),background .3s;background:linear-gradient(90deg,#4f8fff,#00c8e0);}
+#tasks-app .progress-fill.c100{background:linear-gradient(90deg,#22d07a,#00e5a0);}
+#tasks-app .progress-fill.c0{background:linear-gradient(90deg,#ff5a6e,#ff8f5a);}
+#tasks-app .progress-fill.c30{background:linear-gradient(90deg,#f5c542,#f0a020);}
+#tasks-app .progress-detail{font-size:11px;color:#4a5a78;font-family:'JetBrains Mono',monospace;}
+
+#tasks-app .past-notice{margin:10px 18px 0;padding:9px 13px;background:#141c2e;border:1px solid rgba(255,255,255,0.06);border-radius:10px;font-size:11px;color:#6b7fa0;font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:8px;}
+#tasks-app .past-notice.arch{border-color:rgba(79,143,255,0.2);}
+#tasks-app .pn-dot{width:6px;height:6px;border-radius:50%;background:#4a5a78;flex-shrink:0;}
+#tasks-app .past-notice.arch .pn-dot{background:#4f8fff;}
+
+#tasks-app .tasks-section{padding:14px 18px 0;}
+#tasks-app .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+#tasks-app .section-label{font-size:11px;color:#4a5a78;text-transform:uppercase;letter-spacing:1.2px;font-family:'JetBrains Mono',monospace;}
+#tasks-app .task-count{font-size:10px;background:#141c2e;border:1px solid rgba(255,255,255,0.1);color:#6b7fa0;padding:3px 8px;border-radius:6px;font-family:'JetBrains Mono',monospace;}
+
+#tasks-app .task-item{display:flex;align-items:flex-start;gap:12px;padding:13px 14px;background:#0e1420;border:1px solid rgba(255,255,255,0.06);border-radius:13px;margin-bottom:8px;transition:all .2s;cursor:pointer;position:relative;overflow:hidden;}
+#tasks-app .task-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:#4f8fff;border-radius:0 2px 2px 0;opacity:0;transition:opacity .2s;}
+#tasks-app .task-item:hover{border-color:rgba(255,255,255,0.1);background:#141c2e;}
+#tasks-app .task-item:hover::before{opacity:0.4;}
+#tasks-app .task-item.done{background:rgba(34,208,122,0.04);border-color:rgba(34,208,122,0.12);}
+#tasks-app .task-item.done::before{background:#22d07a;opacity:1;}
+#tasks-app .task-item.past-done{background:rgba(34,208,122,0.04);border-color:rgba(34,208,122,0.12);cursor:default;}
+#tasks-app .task-item.past-done::before{background:#22d07a;opacity:1;}
+#tasks-app .task-item.past-undone{opacity:0.45;cursor:default;}
+
+#tasks-app .task-check{width:22px;height:22px;border:2px solid rgba(255,255,255,0.1);border-radius:7px;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .2s;background:transparent;}
+#tasks-app .task-item.done .task-check,#tasks-app .task-item.past-done .task-check{background:#22d07a;border-color:#22d07a;}
+#tasks-app .task-check svg{opacity:0;transform:scale(0.5);transition:all .2s;}
+#tasks-app .task-item.done .task-check svg,#tasks-app .task-item.past-done .task-check svg{opacity:1;transform:scale(1);}
+
+#tasks-app .task-body{flex:1;min-width:0;}
+#tasks-app .task-title{font-size:14px;font-weight:500;color:#dce6f5;transition:color .2s;line-height:1.4;}
+#tasks-app .task-item.done .task-title,#tasks-app .task-item.past-done .task-title{color:#4a5a78;text-decoration:line-through;text-decoration-color:#4a5a78;}
+#tasks-app .task-note{font-size:12px;color:#6b7fa0;margin-top:4px;line-height:1.4;font-style:italic;}
+#tasks-app .task-badges{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap;}
+#tasks-app .badge{font-size:10px;padding:2px 7px;border-radius:5px;font-family:'JetBrains Mono',monospace;}
+#tasks-app .badge-repeat{background:rgba(79,143,255,0.12);color:#4f8fff;}
+#tasks-app .badge-cat{background:rgba(167,139,250,0.15);color:#a78bfa;}
+#tasks-app .task-actions{display:flex;gap:4px;opacity:0;transition:opacity .2s;flex-shrink:0;}
+#tasks-app .task-item:hover .task-actions{opacity:1;}
+#tasks-app .act-btn{width:26px;height:26px;border:none;border-radius:7px;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+#tasks-app .act-edit{background:rgba(245,197,66,0.12);color:#f5c542;}
+#tasks-app .act-del{background:rgba(255,90,110,0.12);color:#ff5a6e;}
+#tasks-app .act-edit:hover{background:rgba(245,197,66,0.25);}
+#tasks-app .act-del:hover{background:rgba(255,90,110,0.25);}
+#tasks-app .empty-state{text-align:center;padding:40px 20px;color:#4a5a78;font-size:13px;}
+#tasks-app .empty-state .ei{font-size:36px;margin-bottom:10px;opacity:0.4;}
+
+#tasks-app .fab{position:fixed;bottom:calc(68px + env(safe-area-inset-bottom));right:calc(max(16px, calc(50% - 230px + 16px)));width:50px;height:50px;background:linear-gradient(135deg,#4f8fff,#3066cc);border:none;border-radius:15px;color:#fff;font-size:22px;cursor:pointer;box-shadow:0 6px 20px rgba(79,143,255,0.35);display:flex;align-items:center;justify-content:center;transition:all .2s;z-index:200;-webkit-tap-highlight-color:transparent;}
+#tasks-app .fab:active{transform:scale(0.93);}
+
+#tasks-app .page{display:none;}
+#tasks-app .page.active{display:block;animation:fadeUp .25s ease;}
+
+#tasks-app .report-header{padding:18px 18px 10px;border-bottom:1px solid rgba(255,255,255,0.06);}
+#tasks-app .report-title{font-size:16px;font-weight:700;color:#fff;}
+#tasks-app .report-sub{font-size:11px;color:#4a5a78;margin-top:3px;font-family:'JetBrains Mono',monospace;}
+#tasks-app .rep-tabs{display:flex;margin:14px 18px 0;background:#0e1420;border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:3px;gap:3px;}
+#tasks-app .rep-tab{flex:1;padding:8px;text-align:center;cursor:pointer;font-size:12px;font-weight:500;color:#4a5a78;border-radius:9px;transition:all .2s;}
+#tasks-app .rep-tab.active{background:#141c2e;color:#4f8fff;box-shadow:0 0 0 1px rgba(79,143,255,0.2);}
+#tasks-app .rep-content{padding:14px 18px 0;}
+#tasks-app .rep-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+#tasks-app .rep-stat{background:#0e1420;border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:12px 10px;text-align:center;}
+#tasks-app .rep-stat-val{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:#fff;margin-bottom:4px;}
+#tasks-app .rep-stat-val.g{color:#22d07a;}
+#tasks-app .rep-stat-val.y{color:#f5c542;}
+#tasks-app .rep-stat-val.r{color:#ff5a6e;}
+#tasks-app .rep-stat-label{font-size:10px;color:#4a5a78;text-transform:uppercase;letter-spacing:0.8px;}
+#tasks-app .rep-day-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);}
+#tasks-app .rep-day-row:last-child{border-bottom:none;}
+#tasks-app .rep-day-date{font-family:'JetBrains Mono',monospace;font-size:11px;color:#6b7fa0;width:54px;flex-shrink:0;}
+#tasks-app .rep-day-bar-wrap{flex:1;height:6px;background:#1a2440;border-radius:6px;overflow:hidden;}
+#tasks-app .rep-day-bar{height:100%;border-radius:6px;transition:width .4s;}
+#tasks-app .rep-day-pct{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;width:34px;text-align:right;flex-shrink:0;}
+#tasks-app .rep-day-detail{font-size:10px;color:#4a5a78;font-family:'JetBrains Mono',monospace;width:36px;flex-shrink:0;text-align:right;}
+#tasks-app .rep-task-row{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#0e1420;border:1px solid rgba(255,255,255,0.06);border-radius:10px;margin-bottom:6px;}
+#tasks-app .rep-task-name{font-size:13px;font-weight:500;color:#dce6f5;}
+#tasks-app .rep-task-stats{font-family:'JetBrains Mono',monospace;font-size:11px;color:#6b7fa0;}
+#tasks-app .rep-task-rate{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;}
+#tasks-app .rep-section-label{font-size:11px;color:#4a5a78;text-transform:uppercase;letter-spacing:1px;font-family:'JetBrains Mono',monospace;margin:14px 0 10px;}
+#tasks-app .no-data{text-align:center;padding:30px;color:#4a5a78;font-size:13px;}
+
+/* Tasks modals */
+#tasks-app .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:8000;align-items:flex-end;justify-content:center;backdrop-filter:blur(6px);}
+#tasks-app .modal.open{display:flex;animation:fadeIn .2s;}
+#tasks-app .sheet{background:#0e1420;border:1px solid rgba(255,255,255,0.1);border-radius:20px 20px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom)) 20px;width:100%;max-width:460px;animation:slideUp .28s cubic-bezier(.4,0,.2,1);max-height:90vh;overflow-y:auto;}
+#tasks-app .sheet-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+#tasks-app .sheet-title{font-size:15px;font-weight:700;color:#fff;}
+#tasks-app .sheet-close{width:28px;height:28px;background:#141c2e;border:none;color:#6b7fa0;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+#tasks-app .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+#tasks-app .cal-month{font-size:13px;font-weight:600;color:#fff;font-family:'JetBrains Mono',monospace;}
+#tasks-app .cal-arrow{background:#141c2e;border:1px solid rgba(255,255,255,0.1);color:#6b7fa0;width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+#tasks-app .cal-arrow:hover{border-color:#4f8fff;color:#4f8fff;}
+#tasks-app .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+#tasks-app .cal-dow{text-align:center;font-size:10px;color:#4a5a78;font-family:'JetBrains Mono',monospace;padding:3px 0 7px;text-transform:uppercase;}
+#tasks-app .cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;cursor:pointer;font-size:12px;font-weight:500;color:#6b7fa0;transition:all .15s;position:relative;}
+#tasks-app .cal-day:hover:not(.empty-day){background:#141c2e;color:#dce6f5;}
+#tasks-app .cal-day.has-data::after{content:'';position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:3px;height:3px;border-radius:50%;background:#4f8fff;}
+#tasks-app .cal-day.today{background:rgba(79,143,255,0.15);color:#4f8fff;font-weight:700;}
+#tasks-app .cal-day.selected{background:#4f8fff;color:#fff;font-weight:700;}
+#tasks-app .cal-day.selected::after{background:#fff;}
+#tasks-app .cal-day.empty-day{cursor:default;}
+
+#tasks-app .form-group{margin-bottom:13px;}
+#tasks-app .form-label{display:block;font-size:11px;font-weight:500;color:#6b7fa0;text-transform:uppercase;letter-spacing:1px;font-family:'JetBrains Mono',monospace;margin-bottom:6px;}
+#tasks-app .form-input,#tasks-app .form-textarea{width:100%;padding:11px 13px;background:#141c2e;border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#dce6f5;font-size:14px;font-family:'Space Grotesk',sans-serif;transition:border-color .2s;resize:none;}
+#tasks-app .form-input:focus,#tasks-app .form-textarea:focus{outline:none;border-color:rgba(79,143,255,0.5);box-shadow:0 0 0 3px rgba(79,143,255,0.06);}
+#tasks-app .form-input::placeholder,#tasks-app .form-textarea::placeholder{color:#4a5a78;}
+#tasks-app .repeat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+#tasks-app .repeat-opt{padding:8px 4px;text-align:center;border:1px solid rgba(255,255,255,0.1);background:#141c2e;border-radius:9px;cursor:pointer;font-size:11px;color:#6b7fa0;transition:all .15s;}
+#tasks-app .repeat-opt.sel{border-color:rgba(79,143,255,0.5);background:rgba(79,143,255,0.1);color:#4f8fff;}
+#tasks-app .btn{width:100%;padding:13px;border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:all .2s;}
+#tasks-app .btn-primary{background:linear-gradient(135deg,#4f8fff,#3066cc);color:#fff;box-shadow:0 4px 16px rgba(79,143,255,0.25);}
+#tasks-app .btn-primary:hover{transform:translateY(-1px);}
+#tasks-app .btn-danger{background:rgba(255,90,110,0.1);color:#ff5a6e;border:1px solid rgba(255,90,110,0.2);}
+#tasks-app .btn-outline{background:transparent;color:#6b7fa0;border:1px solid rgba(255,255,255,0.1);}
+#tasks-app .confirm-sheet{max-width:340px;margin:0 auto;}
+#tasks-app .toast{position:fixed;bottom:calc(100px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%) translateY(10px);background:#141c2e;border:1px solid rgba(255,255,255,0.1);color:#dce6f5;padding:11px 18px;border-radius:12px;font-size:13px;white-space:nowrap;opacity:0;transition:all .25s;z-index:9999;box-shadow:0 8px 28px rgba(0,0,0,0.4);}
+#tasks-app .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#tasks-app .toast.ok{border-color:rgba(34,208,122,0.4);color:#22d07a;}
+#tasks-app .toast.err{border-color:rgba(255,90,110,0.4);color:#ff5a6e;}
+
+/* SHARED ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:#1a2440;border-radius:4px;}
+</style>
 </head>
 <body>
 
+<!-- ═══════════════════════════════
+     FINANCE APP
+═══════════════════════════════ -->
+<div id="finance-app" class="app-page active">
 <div class="app-wrapper">
-    <div class="header">
-        <div class="header-left">
-            <h1>Shaxsiy Budjet</h1>
-            <p>@Axrorbek_o6</p>
-        </div>
-        <div class="header-badge" id="month-badge">— —</div>
+  <div class="header">
+    <div class="header-left">
+      <h1>Shaxsiy Budjet</h1>
+      <p>@Axrorbek_o6</p>
     </div>
-
-    <div class="tabs">
-        <div class="tab active" data-tab="main">Asosiy</div>
-        <div class="tab" data-tab="history">Tarix</div>
-        <div class="tab" data-tab="add">＋ Qo'sh</div>
-        <div class="tab" data-tab="manage">Sozlama</div>
+    <div class="header-badge" id="month-badge">— —</div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" data-tab="main">Asosiy</div>
+    <div class="tab" data-tab="history">Tarix</div>
+    <div class="tab" data-tab="add">＋ Qo'sh</div>
+    <div class="tab" data-tab="manage">Sozlama</div>
+  </div>
+  <div class="content">
+    <div id="main-tab" class="tab-content active">
+      <div class="balance-card card">
+        <div class="balance-label">Joriy Balans</div>
+        <div class="balance-amount" id="current-balance">0 <span>so'm</span></div>
+        <div class="balance-indicator" id="balance-indicator"><span>●</span> <span id="balance-status">Hisob</span></div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-card clickable-card" id="go-history-btn">
+          <div class="stat-label">Kunlik Limit</div>
+          <div class="stat-value" id="daily-limit" style="color:#00d4ff">0</div>
+          <div style="font-size:11px;color:#64748b;margin-top:4px;">so'm / kun</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Oy Tugashiga</div>
+          <div class="stat-value" id="days-left" style="color:#fbbf24">0</div>
+          <div style="font-size:11px;color:#64748b;margin-top:4px;" id="days-detail">kun qoldi</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">Kategoriyalar bo'yicha</div>
+        <div class="chart-container"><canvas id="chart"></canvas></div>
+      </div>
     </div>
-
-    <div class="content">
-
-        <!-- MAIN TAB -->
-        <div id="main-tab" class="tab-content active">
-            <div class="balance-card card">
-                <div class="balance-label">Joriy Balans</div>
-                <div class="balance-amount" id="current-balance">0 <span>so'm</span></div>
-                <div class="balance-indicator" id="balance-indicator">
-                    <span>●</span> <span id="balance-status">Hisob</span>
-                </div>
-            </div>
-
-            <div class="stat-row">
-                <div class="stat-card clickable-card" id="go-history-btn">
-                    <div class="stat-label">Kunlik Limit</div>
-                    <div class="stat-value" id="daily-limit" style="color:var(--accent)">0</div>
-                    <div style="font-size:11px;color:var(--muted);margin-top:4px;">so'm / kun</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Oy Tugashiga</div>
-                    <div class="stat-value" id="days-left" style="color:var(--yellow)">0</div>
-                    <div style="font-size:11px;color:var(--muted);margin-top:4px;" id="days-detail">kun qoldi</div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="section-title">Kategoriyalar bo'yicha</div>
-                <div class="chart-container">
-                    <canvas id="chart"></canvas>
-                </div>
-            </div>
+    <div id="history-tab" class="tab-content">
+      <div class="card">
+        <div class="section-title">Operatsiyalar tarixi</div>
+        <div class="filter-row">
+          <button class="filter-btn active" data-filter="week">Hafta</button>
+          <button class="filter-btn" data-filter="month">Oy</button>
+          <select id="category-filter" class="filter-select"><option value="all">Barcha kategoriya</option></select>
         </div>
-
-        <!-- HISTORY TAB -->
-        <div id="history-tab" class="tab-content">
-            <div class="card">
-                <div class="section-title">Operatsiyalar tarixi</div>
-                <div class="filter-row">
-                    <button class="filter-btn active" data-filter="week">Hafta</button>
-                    <button class="filter-btn" data-filter="month">Oy</button>
-                    <select id="category-filter" class="filter-select">
-                        <option value="all">Barcha kategoriya</option>
-                    </select>
-                </div>
-                <div id="expenses-list">
-                    <div class="empty"><div class="empty-icon">📭</div>Ma'lumotlar yo'q</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ADD TAB -->
-        <div id="add-tab" class="tab-content">
-            <div class="card">
-                <div class="section-title">Yangi operatsiya</div>
-
-                <div class="form-group">
-                    <label class="form-label">Summa (so'm)</label>
-                    <input type="number" id="amount" class="form-input" placeholder="0">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Sabab / Izoh</label>
-                    <input type="text" id="reason" class="form-input" placeholder="Nima uchun?">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Kategoriya</label>
-                    <select id="category" class="form-select"></select>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Tur</label>
-                    <div class="type-toggle">
-                        <div class="type-option selected" data-val="chiqim" id="type-chiqim">⬇️ Chiqim</div>
-                        <div class="type-option" data-val="kirim" id="type-kirim">⬆️ Kirim</div>
-                    </div>
-                    <input type="hidden" id="type" value="chiqim">
-                </div>
-
-                <button class="btn btn-primary" id="add-transaction">Qo'shish</button>
-            </div>
-        </div>
-
-        <!-- MANAGE TAB -->
-        <div id="manage-tab" class="tab-content">
-            <div class="card">
-                <div class="section-title">Hisob boshqaruvi</div>
-                <div class="mgmt-grid">
-                    <button class="btn btn-warning btn-sm" id="reset-chart">Joriy oyni tozalash</button>
-                    <button class="btn btn-danger btn-sm" id="reset-month">Yangi oy boshlash</button>
-                    <button class="btn btn-danger btn-sm" id="reset-all">Barchasini tozalash</button>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="section-title">Kategoriyalar</div>
-                <div id="categories-list">
-                    <div class="empty"><div class="empty-icon">🗂️</div>Kategoriyalar yo'q</div>
-                </div>
-                <div class="divider"></div>
-                <div class="form-group">
-                    <label class="form-label">Yangi kategoriya</label>
-                    <input type="text" id="new-category-name" class="form-input" placeholder="Kategoriya nomi">
-                </div>
-                <button class="btn btn-success" id="add-category">Kategoriya qo'shish</button>
-            </div>
-
-            <div class="card">
-                <div class="section-title">Ma'lumotlarni eksport</div>
-                <div class="form-group">
-                    <select id="file-format" class="form-select">
-                        <option value="csv">CSV (Excel uchun)</option>
-                        <option value="txt">TXT fayl</option>
-                        <option value="json">JSON fayl</option>
-                    </select>
-                </div>
-                <div class="dl-row">
-                    <button class="btn btn-success btn-sm" id="download-btn">⬇ Yuklab olish</button>
-                    <button class="btn btn-outline btn-sm" id="copy-data">⎘ Nusxa olish</button>
-                </div>
-            </div>
-        </div>
-
+        <div id="expenses-list"><div class="empty"><div class="empty-icon">📭</div>Ma'lumotlar yo'q</div></div>
+      </div>
     </div>
+    <div id="add-tab" class="tab-content">
+      <div class="card">
+        <div class="section-title">Yangi operatsiya</div>
+        <div class="form-group"><label class="form-label">Summa (so'm)</label><input type="number" id="amount" class="form-input" placeholder="0"></div>
+        <div class="form-group"><label class="form-label">Sabab / Izoh</label><input type="text" id="reason" class="form-input" placeholder="Nima uchun?"></div>
+        <div class="form-group"><label class="form-label">Kategoriya</label><select id="category" class="form-select"></select></div>
+        <div class="form-group">
+          <label class="form-label">Tur</label>
+          <div class="type-toggle">
+            <div class="type-option selected" data-val="chiqim" id="type-chiqim">⬇️ Chiqim</div>
+            <div class="type-option" data-val="kirim" id="type-kirim">⬆️ Kirim</div>
+          </div>
+          <input type="hidden" id="type" value="chiqim">
+        </div>
+        <button class="btn btn-primary" id="add-transaction">Qo'shish</button>
+      </div>
+    </div>
+    <div id="manage-tab" class="tab-content">
+      <div class="card">
+        <div class="section-title">Hisob boshqaruvi</div>
+        <div class="mgmt-grid">
+          <button class="btn btn-warning btn-sm" id="reset-chart">Joriy oyni tozalash</button>
+          <button class="btn btn-danger btn-sm" id="reset-month">Yangi oy boshlash</button>
+          <button class="btn btn-danger btn-sm" id="reset-all">Barchasini tozalash</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">Kategoriyalar</div>
+        <div id="categories-list"><div class="empty"><div class="empty-icon">🗂️</div>Kategoriyalar yo'q</div></div>
+        <div class="divider"></div>
+        <div class="form-group"><label class="form-label">Yangi kategoriya</label><input type="text" id="new-category-name" class="form-input" placeholder="Kategoriya nomi"></div>
+        <button class="btn btn-success" id="add-category">Kategoriya qo'shish</button>
+      </div>
+      <div class="card">
+        <div class="section-title">Ma'lumotlarni eksport</div>
+        <div class="form-group">
+          <select id="file-format" class="form-select">
+            <option value="csv">CSV (Excel uchun)</option>
+            <option value="txt">TXT fayl</option>
+            <option value="json">JSON fayl</option>
+          </select>
+        </div>
+        <div class="dl-row">
+          <button class="btn btn-success btn-sm" id="download-btn">⬇ Yuklab olish</button>
+          <button class="btn btn-outline btn-sm" id="copy-data">⎘ Nusxa olish</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Finance modals -->
+<div id="edit-modal" class="modal"><div class="modal-sheet"><div class="modal-header"><div class="modal-title">Operatsiyani tahrirlash</div><button class="modal-close" id="close-edit-modal">×</button></div><div class="form-group"><label class="form-label">Summa</label><input type="number" id="edit-amount" class="form-input"></div><div class="form-group"><label class="form-label">Sabab</label><input type="text" id="edit-reason" class="form-input"></div><div class="form-group"><label class="form-label">Kategoriya</label><select id="edit-category" class="form-select"></select></div><div class="form-group"><label class="form-label">Tur</label><div class="type-toggle"><div class="type-option selected" data-val="chiqim" id="edit-type-chiqim">⬇️ Chiqim</div><div class="type-option" data-val="kirim" id="edit-type-kirim">⬆️ Kirim</div></div><input type="hidden" id="edit-type" value="chiqim"></div><button class="btn btn-primary" id="save-edit">Saqlash</button></div></div>
+<div id="edit-category-modal" class="modal"><div class="modal-sheet"><div class="modal-header"><div class="modal-title">Kategoriyani tahrirlash</div><button class="modal-close" id="close-edit-category-modal">×</button></div><div class="form-group"><label class="form-label">Kategoriya nomi</label><input type="text" id="edit-category-name" class="form-input"></div><button class="btn btn-primary" id="save-category-edit">Saqlash</button></div></div>
+<div id="f-confirm-modal" class="modal"><div class="modal-sheet" style="max-width:340px;margin:0 auto;"><div class="modal-header"><div class="modal-title">Tasdiqlash</div></div><p id="f-confirm-message" style="color:#64748b;font-size:14px;margin-bottom:20px;line-height:1.6;"></p><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><button class="btn btn-danger" id="f-confirm-yes">Ha, tasdiqlash</button><button class="btn btn-outline" id="f-confirm-no">Bekor qilish</button></div></div></div>
+<div id="f-toast" class="toast"></div>
 </div>
 
-<!-- EDIT TRANSACTION MODAL -->
-<div id="edit-modal" class="modal">
-    <div class="modal-sheet">
-        <div class="modal-header">
-            <div class="modal-title">Operatsiyani tahrirlash</div>
-            <button class="modal-close" id="close-edit-modal">×</button>
-        </div>
-        <div class="form-group">
-            <label class="form-label">Summa</label>
-            <input type="number" id="edit-amount" class="form-input">
-        </div>
-        <div class="form-group">
-            <label class="form-label">Sabab</label>
-            <input type="text" id="edit-reason" class="form-input">
-        </div>
-        <div class="form-group">
-            <label class="form-label">Kategoriya</label>
-            <select id="edit-category" class="form-select"></select>
-        </div>
-        <div class="form-group">
-            <label class="form-label">Tur</label>
-            <div class="type-toggle">
-                <div class="type-option selected" data-val="chiqim" id="edit-type-chiqim">⬇️ Chiqim</div>
-                <div class="type-option" data-val="kirim" id="edit-type-kirim">⬆️ Kirim</div>
-            </div>
-            <input type="hidden" id="edit-type" value="chiqim">
-        </div>
-        <button class="btn btn-primary" id="save-edit">Saqlash</button>
+<!-- ═══════════════════════════════
+     TASKS APP
+═══════════════════════════════ -->
+<div id="tasks-app" class="app-page">
+<div class="app">
+  <div class="page active" id="page-today">
+    <div class="date-nav">
+      <button class="nav-arrow" id="prev-day">‹</button>
+      <div class="date-center" id="open-calendar"><div class="date-label" id="date-label">—</div><div class="date-sub" id="weekday-label">—</div></div>
+      <button class="nav-arrow" id="next-day">›</button>
     </div>
+    <div class="past-notice" id="past-notice" style="display:none"><div class="pn-dot"></div><span id="past-notice-text"></span></div>
+    <div class="progress-section">
+      <div class="progress-header"><span class="progress-title">Progress</span><span class="progress-pct" id="pct-label">0%</span></div>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+      <div class="progress-detail" id="progress-detail">0 / 0 vazifa</div>
+    </div>
+    <div class="tasks-section">
+      <div class="section-header"><span class="section-label">Vazifalar</span><span class="task-count" id="task-count">0 ta</span></div>
+      <div id="task-list"></div>
+    </div>
+  </div>
+  <div class="page" id="page-report">
+    <div class="report-header"><div class="report-title">Hisobot</div><div class="report-sub" id="report-sub">Statistika</div></div>
+    <div class="rep-tabs"><div class="rep-tab active" data-rep="week">Haftalik</div><div class="rep-tab" data-rep="month">Oylik</div></div>
+    <div class="rep-content" id="rep-content"></div>
+  </div>
+</div>
+<button class="fab" id="open-add">＋</button>
+<nav class="bottom-nav">
+  <button class="bnav-item active" data-page="today"><span class="bnav-icon">✦</span><span class="bnav-label">Bugun</span></button>
+  <button class="bnav-item" data-page="report"><span class="bnav-icon">◈</span><span class="bnav-label">Hisobot</span></button>
+</nav>
+<!-- Tasks modals -->
+<div class="modal" id="cal-modal"><div class="sheet"><div class="sheet-header"><div class="sheet-title">Kunni tanlang</div><button class="sheet-close" id="close-cal">×</button></div><div class="cal-nav"><button class="cal-arrow" id="cal-prev">‹</button><div class="cal-month" id="cal-month-label"></div><button class="cal-arrow" id="cal-next">›</button></div><div class="cal-grid" id="cal-grid"></div></div></div>
+<div class="modal" id="task-modal"><div class="sheet"><div class="sheet-header"><div class="sheet-title" id="task-modal-title">Yangi vazifa</div><button class="sheet-close" id="close-task">×</button></div><div class="form-group"><label class="form-label">Vazifa nomi</label><input type="text" id="t-name" class="form-input" placeholder="Nima qilish kerak?"></div><div class="form-group"><label class="form-label">Izoh (ixtiyoriy)</label><textarea id="t-note" class="form-textarea" rows="2" placeholder="Qo'shimcha ma'lumot..."></textarea></div><div class="form-group"><label class="form-label">Kategoriya</label><input type="text" id="t-cat" class="form-input" placeholder="Masalan: Ish, O'qish, Sport..."></div><div class="form-group"><label class="form-label">Takrorlanish</label><div class="repeat-grid"><div class="repeat-opt sel" data-r="daily">Har kun</div><div class="repeat-opt" data-r="weekly">Haftalik</div><div class="repeat-opt" data-r="weekdays">Ish kuni</div><div class="repeat-opt" data-r="none">Bir marta</div></div><input type="hidden" id="t-repeat" value="daily"></div><button class="btn btn-primary" id="save-task">Saqlash</button></div></div>
+<div class="modal" id="t-confirm-modal"><div class="sheet confirm-sheet"><div class="sheet-header"><div class="sheet-title">Tasdiqlash</div></div><p id="t-confirm-msg" style="color:#6b7fa0;font-size:14px;margin-bottom:20px;line-height:1.6;"></p><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><button class="btn btn-danger" id="t-confirm-yes">Ha, tasdiqlash</button><button class="btn btn-outline" id="t-confirm-no">Bekor qilish</button></div></div></div>
+<div class="toast" id="t-toast"></div>
 </div>
 
-<!-- EDIT CATEGORY MODAL -->
-<div id="edit-category-modal" class="modal">
-    <div class="modal-sheet">
-        <div class="modal-header">
-            <div class="modal-title">Kategoriyani tahrirlash</div>
-            <button class="modal-close" id="close-edit-category-modal">×</button>
-        </div>
-        <div class="form-group">
-            <label class="form-label">Kategoriya nomi</label>
-            <input type="text" id="edit-category-name" class="form-input">
-        </div>
-        <button class="btn btn-primary" id="save-category-edit">Saqlash</button>
-    </div>
+<!-- APP SWITCHER -->
+<div class="app-switcher" id="app-switcher">
+  <button class="switcher-btn to-tasks" id="switch-btn">
+    <span class="sw-icon">✦</span>
+    <span class="sw-label">Tasks ga o'tish</span>
+  </button>
 </div>
-
-<!-- CONFIRM MODAL -->
-<div id="confirm-modal" class="modal">
-    <div class="modal-sheet" style="max-width:340px;margin:0 auto 0;">
-        <div class="modal-header">
-            <div class="modal-title" id="confirm-title">Tasdiqlash</div>
-        </div>
-        <p id="confirm-message" style="color:var(--muted);font-size:14px;margin-bottom:20px;line-height:1.6;"></p>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-            <button class="btn btn-danger" id="confirm-yes">Ha, tasdiqlash</button>
-            <button class="btn btn-outline" id="confirm-no">Bekor qilish</button>
-        </div>
-    </div>
-</div>
-
-<!-- TOAST -->
-<div id="toast" class="toast"></div>
 
 <script>
-    // ─── STATE ───────────────────────────────────────────────────────────────
-    let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
-    let balance = parseInt(localStorage.getItem('balance')) || 0;
-    let currentMonth = parseInt(localStorage.getItem('currentMonth') ?? new Date().getMonth());
-    let currentYear = parseInt(localStorage.getItem('currentYear') ?? new Date().getFullYear());
-    let editingTransactionId = null;
-    let editingCategoryId = null;
+// ══════════════════════════════════════════════
+// APP SWITCHER
+// ══════════════════════════════════════════════
+let currentApp = 'finance';
 
-    let categories = JSON.parse(localStorage.getItem('categories')) || [
-        { id: 1, name: 'UY', value: 'uy' },
-        { id: 2, name: 'Kvartira', value: 'kv' },
-        { id: 3, name: 'Oziq-ovqat', value: 'ov' },
-        { id: 4, name: 'Ozm', value: 'ozm' },
-        { id: 5, name: 'Boshqa', value: 'boshqa' }
-    ];
+// URL param tekshiruv
+const urlParams = new URLSearchParams(window.location.search);
+const initApp = urlParams.get('app');
 
-    const MONTHS_UZ = ['Yan','Fev','Mar','Apr','May','Iyun','Iyul','Avg','Sen','Okt','Nov','Dek'];
+function switchApp(to){
+  currentApp = to;
+  document.getElementById('finance-app').classList.toggle('active', to==='finance');
+  document.getElementById('tasks-app').classList.toggle('active', to==='tasks');
+  document.body.style.background = to==='finance' ? '#0a0e1a' : '#080c14';
 
-    // ─── INIT ─────────────────────────────────────────────────────────────────
-    document.addEventListener('DOMContentLoaded', () => {
-        // Telegram WebApp himoyasi
-        if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
-            const tg = Telegram.WebApp;
-            tg.expand();
-            tg.MainButton.setText("Yopish").onClick(() => tg.close()).show();
+  const btn = document.getElementById('switch-btn');
+  const switcher = document.getElementById('app-switcher');
 
-            const user = tg.initDataUnsafe?.user;
-            if (user && user.id !== 1034121198) {
-                document.body.innerHTML = `
-                    <div style="display:flex;justify-content:center;align-items:center;height:100vh;
-                                flex-direction:column;padding:30px;text-align:center;
-                                background:#0a0e1a;font-family:'Sora',sans-serif;">
-                        <div style="font-size:48px;margin-bottom:20px;">🔒</div>
-                        <h2 style="color:#ff4d6d;margin-bottom:10px;font-size:20px;">Ruxsat yo'q</h2>
-                        <p style="color:#64748b;font-size:14px;">
-                            Ushbu ilova faqat <strong style="color:#00d4ff;">@Axrorbek_o6</strong> uchun mo'ljallangan
-                        </p>
-                    </div>
-                `;
-                return;
-            }
-        }
+  if(to==='finance'){
+    btn.className='switcher-btn to-tasks';
+    btn.innerHTML='<span class="sw-icon">✦</span><span class="sw-label">Tasks</span>';
+    // Finance'da bottom-nav yo'q — pastroqda tursin
+    switcher.classList.remove('over-nav');
+  } else {
+    btn.className='switcher-btn to-finance';
+    btn.innerHTML='<span class="sw-icon">💰</span><span class="sw-label">Finance</span>';
+    // Tasks'da bottom-nav bor — uning ustida tursin
+    switcher.classList.add('over-nav');
+  }
 
-        updateMonthBadge();
-        updateCategorySelects();
-        updateBalanceAndStats();
-        setupEventListeners();
+  const fab = document.getElementById('open-add');
+  if(fab) fab.style.display = to==='tasks' && tCurPage==='today' ? 'flex' : 'none';
+}
+
+document.getElementById('switch-btn').addEventListener('click', ()=>{
+  switchApp(currentApp==='finance' ? 'tasks' : 'finance');
+});
+
+// ══════════════════════════════════════════════
+// FINANCE APP LOGIC
+// ══════════════════════════════════════════════
+let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+let balance = parseInt(localStorage.getItem('balance')) || 0;
+let currentMonth = parseInt(localStorage.getItem('currentMonth') ?? new Date().getMonth());
+let currentYear = parseInt(localStorage.getItem('currentYear') ?? new Date().getFullYear());
+let editingTransactionId = null;
+let editingCategoryId = null;
+let _fConfirmCb = null;
+
+let categories = JSON.parse(localStorage.getItem('categories')) || [
+  {id:1,name:'UY',value:'uy'},{id:2,name:'Kvartira',value:'kv'},
+  {id:3,name:'Oziq-ovqat',value:'ov'},{id:4,name:'Ozm',value:'ozm'},{id:5,name:'Boshqa',value:'boshqa'}
+];
+const MONTHS_UZ = ['Yan','Fev','Mar','Apr','May','Iyun','Iyul','Avg','Sen','Okt','Nov','Dek'];
+
+function fToast(msg,type='success'){
+  const t=document.getElementById('f-toast');
+  t.textContent=msg;t.className=`toast ${type} show`;
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3000);
+}
+function fOpenModal(id){document.getElementById(id).classList.add('open');}
+function fCloseModal(id){document.getElementById(id).classList.remove('open');}
+function fConfirm(msg,cb){document.getElementById('f-confirm-message').textContent=msg;_fConfirmCb=cb;fOpenModal('f-confirm-modal');}
+
+function updateMonthBadge(){document.getElementById('month-badge').textContent=`${MONTHS_UZ[new Date().getMonth()]} ${new Date().getFullYear()}`;}
+
+function updateCategorySelects(){
+  ['category','edit-category','category-filter'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    const isF=id==='category-filter';
+    el.innerHTML=isF?'<option value="all">Barcha kategoriya</option>':'';
+    categories.forEach(c=>{const o=document.createElement('option');o.value=c.value;o.textContent=c.name;el.appendChild(o);});
+  });
+  localStorage.setItem('categories',JSON.stringify(categories));
+}
+
+function loadCategories(){
+  const list=document.getElementById('categories-list');
+  if(!categories.length){list.innerHTML='<div class="empty"><div class="empty-icon">🗂️</div>Kategoriyalar yo\'q</div>';return;}
+  list.innerHTML=categories.map(c=>{
+    const used=transactions.some(t=>t.category===c.value);
+    return `<div class="cat-item"><span class="cat-name">${c.name}</span><div class="cat-actions"><button class="action-btn edit-btn" onclick="editCategory(${c.id})">Tahrir</button><button class="action-btn delete-btn" onclick="deleteCategory(${c.id})" ${used?'disabled style="opacity:0.35;cursor:not-allowed"':''}>O'chir</button></div></div>`;
+  }).join('');
+}
+
+function addCategory(){
+  const name=document.getElementById('new-category-name').value.trim();
+  if(!name){fToast('Kategoriya nomini kiriting!','error');return;}
+  if(categories.some(c=>c.name.toLowerCase()===name.toLowerCase())){fToast('Bu kategoriya allaqachon mavjud!','error');return;}
+  categories.push({id:Date.now(),name,value:name.toLowerCase().replace(/\s+/g,'-')});
+  updateCategorySelects();loadCategories();
+  document.getElementById('new-category-name').value='';
+  fToast('Kategoriya qo\'shildi!');
+}
+
+function editCategory(id){
+  const cat=categories.find(c=>c.id===id);if(!cat)return;
+  document.getElementById('edit-category-name').value=cat.name;
+  editingCategoryId=id;fOpenModal('edit-category-modal');
+}
+
+function deleteCategory(id){
+  fConfirm('Bu kategoriyani o\'chirishni istaysizmi?',()=>{
+    categories=categories.filter(c=>c.id!==id);
+    updateCategorySelects();loadCategories();fToast('Kategoriya o\'chirildi!');
+  });
+}
+
+function saveCategoryEdit(){
+  const name=document.getElementById('edit-category-name').value.trim();
+  if(!name){fToast('Nomni kiriting!','error');return;}
+  if(categories.some(c=>c.name.toLowerCase()===name.toLowerCase()&&c.id!==editingCategoryId)){fToast('Bu nom allaqachon mavjud!','error');return;}
+  const idx=categories.findIndex(c=>c.id===editingCategoryId);if(idx===-1)return;
+  categories[idx].name=name;categories[idx].value=name.toLowerCase().replace(/\s+/g,'-');
+  updateCategorySelects();loadCategories();fCloseModal('edit-category-modal');fToast('Kategoriya tahrirlandi!');
+}
+
+function addTransaction(){
+  const amount=document.getElementById('amount').value;
+  const reason=document.getElementById('reason').value.trim();
+  const category=document.getElementById('category').value;
+  const type=document.getElementById('type').value;
+  if(!amount||!reason){fToast('Summa va sababni kiriting!','error');return;}
+  balance+=type==='kirim'?parseInt(amount):-parseInt(amount);
+  transactions.push({id:Date.now(),amount,reason,category,type,date:new Date().toISOString()});
+  fSaveData();updateBalanceAndStats();fToast('Operatsiya qo\'shildi! ✓');
+  document.getElementById('amount').value='';document.getElementById('reason').value='';
+}
+
+function editTransaction(id){
+  const tx=transactions.find(t=>t.id===id);if(!tx)return;
+  document.getElementById('edit-amount').value=tx.amount;
+  document.getElementById('edit-reason').value=tx.reason;
+  document.getElementById('edit-category').value=tx.category;
+  document.getElementById('edit-type').value=tx.type;
+  ['chiqim','kirim'].forEach(val=>document.getElementById(`edit-type-${val}`).classList.toggle('selected',val===tx.type));
+  editingTransactionId=id;fOpenModal('edit-modal');
+}
+
+function deleteTransaction(id){
+  fConfirm('Bu operatsiyani o\'chirishni istaysizmi?',()=>{
+    const idx=transactions.findIndex(t=>t.id===id);if(idx===-1)return;
+    const tx=transactions[idx];
+    balance+=tx.type==='chiqim'?parseInt(tx.amount):-parseInt(tx.amount);
+    transactions.splice(idx,1);fSaveData();updateBalanceAndStats();loadExpenses();fToast('Operatsiya o\'chirildi!');
+  });
+}
+
+function saveEdit(){
+  const amount=document.getElementById('edit-amount').value;
+  const reason=document.getElementById('edit-reason').value.trim();
+  const category=document.getElementById('edit-category').value;
+  const type=document.getElementById('edit-type').value;
+  if(!amount||!reason){fToast('Barcha maydonlarni to\'ldiring!','error');return;}
+  const idx=transactions.findIndex(t=>t.id===editingTransactionId);if(idx===-1)return;
+  const old=transactions[idx];
+  balance+=old.type==='chiqim'?parseInt(old.amount):-parseInt(old.amount);
+  balance+=type==='kirim'?parseInt(amount):-parseInt(amount);
+  transactions[idx]={...old,amount,reason,category,type};
+  fSaveData();updateBalanceAndStats();loadExpenses();fCloseModal('edit-modal');fToast('Operatsiya tahrirlandi!');
+}
+
+function loadExpenses(){
+  const list=document.getElementById('expenses-list');
+  const filter=document.querySelector('#finance-app .filter-btn.active')?.dataset.filter||'week';
+  const catFilter=document.getElementById('category-filter')?.value||'all';
+  let txs=[...transactions].reverse().filter(t=>{const d=new Date(t.date);return d.getMonth()===currentMonth&&d.getFullYear()===currentYear;});
+  if(filter==='week'){const ago=new Date();ago.setDate(ago.getDate()-7);txs=txs.filter(t=>new Date(t.date)>=ago);}
+  if(catFilter!=='all')txs=txs.filter(t=>t.category===catFilter);
+  if(!txs.length){list.innerHTML='<div class="empty"><div class="empty-icon">📭</div>Operatsiyalar topilmadi</div>';return;}
+  list.innerHTML=txs.map(tx=>{
+    const cat=categories.find(c=>c.value===tx.category);
+    const catName=cat?cat.name:tx.category;
+    const isI=tx.type==='kirim';
+    const date=new Date(tx.date).toLocaleDateString('uz-UZ');
+    return `<div class="tx-item"><div class="tx-icon ${isI?'income':'expense'}">${isI?'⬆️':'⬇️'}</div><div class="tx-info"><div class="tx-title">${tx.reason}</div><div class="tx-meta"><span class="tx-date">${date}</span><span class="tx-cat">${catName}</span></div></div><div class="tx-right"><div class="tx-amount ${isI?'income':'expense'}">${isI?'+':'-'}${parseInt(tx.amount).toLocaleString()}</div><div class="tx-actions"><button class="action-btn edit-btn" onclick="editTransaction(${tx.id})">✎</button><button class="action-btn delete-btn" onclick="deleteTransaction(${tx.id})">✕</button></div></div></div>`;
+  }).join('');
+}
+
+function updateBalanceAndStats(){
+  const abs=Math.abs(balance);
+  document.getElementById('current-balance').innerHTML=`${abs.toLocaleString()} <span>so'm</span>`;
+  const ind=document.getElementById('balance-indicator'),st=document.getElementById('balance-status');
+  if(balance>=0){ind.style.color='#10d48e';ind.style.background='rgba(16,212,142,0.1)';st.textContent='Musbat balans';}
+  else{ind.style.color='#ff4d6d';ind.style.background='rgba(255,77,109,0.1)';st.textContent='Manfiy balans';}
+  const now=new Date();
+  const lastDay=new Date(now.getFullYear(),now.getMonth()+1,0);
+  const extra=4,daysLeft=(lastDay.getDate()-now.getDate())+extra,totalDays=daysLeft>0?daysLeft:1;
+  document.getElementById('days-left').textContent=daysLeft;
+  document.getElementById('days-detail').textContent=`${lastDay.getDate()-now.getDate()} kun + 4 = ${daysLeft} kun`;
+  document.getElementById('daily-limit').textContent=(balance>0?Math.floor(balance/totalDays):0).toLocaleString();
+  initChart(transactions.filter(t=>{const d=new Date(t.date);return d.getMonth()===currentMonth&&d.getFullYear()===currentYear;}));
+}
+
+function initChart(monthTxs){
+  const ctx=document.getElementById('chart');
+  if(window.budgetChart)window.budgetChart.destroy();
+  const totals={};categories.forEach(c=>{totals[c.value]=0;});
+  monthTxs.filter(t=>t.type==='chiqim').forEach(t=>{if(totals.hasOwnProperty(t.category))totals[t.category]+=parseInt(t.amount);});
+  const labels=[],data=[];
+  Object.entries(totals).forEach(([key,val])=>{if(val>0){const cat=categories.find(c=>c.value===key);if(cat){labels.push(cat.name);data.push(val);}}});
+  if(!labels.length){labels.push("Ma'lumot yo'q");data.push(1);}
+  window.budgetChart=new Chart(ctx,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:['#00d4ff','#7c3aed','#10d48e','#ff4d6d','#fbbf24','#f97316','#06b6d4','#8b5cf6'].slice(0,labels.length),borderWidth:0,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',font:{size:11,family:'Sora'},padding:16,boxWidth:10,boxHeight:10,borderRadius:3}},tooltip:{backgroundColor:'#1a2234',borderColor:'rgba(255,255,255,0.08)',borderWidth:1,titleColor:'#e2e8f0',bodyColor:'#94a3b8',padding:12,callbacks:{label:ctx=>` ${ctx.label}: ${ctx.raw.toLocaleString()} so'm`}}}}});
+}
+
+function resetChart(){fConfirm('Joriy oy ma\'lumotlarini tozalashni istaysizmi?',()=>{transactions=transactions.filter(t=>{const d=new Date(t.date);return!(d.getMonth()===currentMonth&&d.getFullYear()===currentYear);});balance=transactions.reduce((s,t)=>t.type==='kirim'?s+parseInt(t.amount):s-parseInt(t.amount),0);fSaveData();updateBalanceAndStats();fToast('Joriy oy tozalandi!');});}
+function resetMonth(){fConfirm('Yangi oy boshlashni istaysizmi?',()=>{const n=new Date();currentMonth=n.getMonth();currentYear=n.getFullYear();updateMonthBadge();fSaveData();updateBalanceAndStats();fToast('Yangi oy boshlandi!');});}
+function resetAll(){fConfirm('Barcha ma\'lumotlarni o\'chirishni istaysizmi?',()=>{transactions=[];balance=0;currentMonth=new Date().getMonth();currentYear=new Date().getFullYear();updateMonthBadge();fSaveData();updateBalanceAndStats();loadExpenses();fToast('Barcha ma\'lumotlar tozalandi!');});}
+
+function generateCSV(){let csv='Sana,Sabab,Summa,Tur,Kategoriya\n';[...transactions].sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach(t=>{const cat=categories.find(c=>c.value===t.category);csv+=`"${new Date(t.date).toLocaleDateString('uz-UZ')}","${t.reason}","${t.amount}","${t.type==='chiqim'?'Chiqim':'Kirim'}","${cat?cat.name:t.category}"\n`;});return csv;}
+function generateTXT(){let txt=`📊 Budjet Ma'lumotlari\n${'═'.repeat(38)}\n\n`;txt+=`💰 Balans: ${balance.toLocaleString()} so'm\n`;const inc=transactions.filter(t=>t.type==='kirim').reduce((s,t)=>s+parseInt(t.amount),0);const exp=transactions.filter(t=>t.type==='chiqim').reduce((s,t)=>s+parseInt(t.amount),0);txt+=`⬆️ Kirim: ${inc.toLocaleString()} so'm\n⬇️ Chiqim: ${exp.toLocaleString()} so'm\n\n`;[...transactions].sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach((t,i)=>{const cat=categories.find(c=>c.value===t.category);txt+=`${i+1}. ${new Date(t.date).toLocaleDateString('uz-UZ')} — ${t.reason}\n   ${t.type==='chiqim'?'⬇️':'⬆️'} ${parseInt(t.amount).toLocaleString()} so'm (${cat?cat.name:t.category})\n\n`;});return txt;}
+function generateJSON(){return JSON.stringify({exportDate:new Date().toISOString(),balance,categories,transactions},null,2);}
+function downloadData(){if(!transactions.length){fToast('Yuklab olish uchun ma\'lumot yo\'q!','error');return;}const fmt=document.getElementById('file-format').value;const map={csv:[generateCSV(),`budjet_${new Date().toISOString().slice(0,10)}.csv`,'text/csv;charset=utf-8;'],json:[generateJSON(),`budjet_${new Date().toISOString().slice(0,10)}.json`,'application/json'],txt:[generateTXT(),`budjet_${new Date().toISOString().slice(0,10)}.txt`,'text/plain']};const[content,filename,mime]=map[fmt];const link=document.createElement('a');link.href=URL.createObjectURL(new Blob([content],{type:mime}));link.download=filename;link.click();fToast(`${fmt.toUpperCase()} formatida yuklandi!`);}
+function copyData(){if(!transactions.length){fToast('Nusxalash uchun ma\'lumot yo\'q!','error');return;}navigator.clipboard?.writeText(generateTXT()).then(()=>fToast('Ma\'lumotlar nusxalandi! ✓')).catch(()=>fToast('Nusxalash muvaffaqiyatsiz','error'));}
+
+function fSaveData(){localStorage.setItem('transactions',JSON.stringify(transactions));localStorage.setItem('balance',balance);localStorage.setItem('currentMonth',currentMonth);localStorage.setItem('currentYear',currentYear);}
+
+// ══════════════════════════════════════════════
+// TASKS APP LOGIC
+// ══════════════════════════════════════════════
+let tTasks = JSON.parse(localStorage.getItem('dtasks3')) || [];
+let tSnap  = JSON.parse(localStorage.getItem('dsnap3'))  || {};
+const T_DAYS   = ['Yakshanba','Dushanba','Seshanba','Chorshanba','Payshanba','Juma','Shanba'];
+const T_MONTHS = ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'];
+const T_RLABELS= {daily:'Har kun',weekly:'Haftalik',weekdays:'Ish kuni',none:'Bir marta'};
+let tCurrentDate=new Date();tCurrentDate.setHours(0,0,0,0);
+let tCalVY=tCurrentDate.getFullYear(),tCalVM=tCurrentDate.getMonth();
+let tEditId=null,tConfCb=null,tCurPage='today',tCurRep='week';
+
+const tp2=n=>String(n).padStart(2,'0');
+const tdk=d=>`${d.getFullYear()}-${tp2(d.getMonth()+1)}-${tp2(d.getDate())}`;
+const tToday=()=>{const d=new Date();d.setHours(0,0,0,0);return d;};
+const tIsToday=d=>d.getTime()===tToday().getTime();
+const tIsPast=d=>d.getTime()<tToday().getTime();
+const tIsFuture=d=>d.getTime()>tToday().getTime();
+
+function tSave(){localStorage.setItem('dtasks3',JSON.stringify(tTasks));localStorage.setItem('dsnap3',JSON.stringify(tSnap));}
+
+function tActiveOn(t,d){
+  const cr=new Date(t.createdAt);cr.setHours(0,0,0,0);
+  if(d<cr)return false;
+  if(t.deletedAt){const dl=new Date(t.deletedAt);dl.setHours(0,0,0,0);if(d>=dl)return false;}
+  const dow=d.getDay();
+  if(t.repeat==='daily')return true;
+  if(t.repeat==='weekly')return cr.getDay()===dow;
+  if(t.repeat==='weekdays')return dow>=1&&dow<=5;
+  if(t.repeat==='none')return cr.getTime()===d.getTime();
+  return false;
+}
+const tActiveTasks=d=>tTasks.filter(t=>tActiveOn(t,d));
+
+function tUpdateSnap(d){
+  const key=tdk(d),dt=tActiveTasks(d);
+  const ch=(tSnap[key]||{checkedIds:[]}).checkedIds;
+  const total=dt.length,done=dt.filter(t=>ch.includes(t.id)).length;
+  const names={};dt.forEach(t=>names[t.id]=t.name);
+  tSnap[key]={checkedIds:ch,taskIds:dt.map(t=>t.id),taskNames:names,pct:total?Math.round(done/total*100):0,done,total};
+  tSave();
+}
+
+function tToast(msg,type='ok'){
+  const t=document.getElementById('t-toast');t.textContent=msg;t.className=`toast ${type} show`;
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2800);
+}
+function tOpenModal(id){document.getElementById(id).classList.add('open');}
+function tCloseModal(id){document.getElementById(id).classList.remove('open');}
+function tConfirm(msg,cb){document.getElementById('t-confirm-msg').textContent=msg;tConfCb=cb;tOpenModal('t-confirm-modal');}
+
+function tRender(){
+  if(tCurPage!=='today')return;
+  const d=tCurrentDate,key=tdk(d);
+  document.getElementById('date-label').textContent=`${tp2(d.getDate())}.${tp2(d.getMonth()+1)}.${String(d.getFullYear()).slice(2)}`;
+  document.getElementById('weekday-label').textContent=tIsToday(d)?'Bugun':T_DAYS[d.getDay()];
+  const pn=document.getElementById('past-notice');
+  if(tIsPast(d)){
+    const s=tSnap[key];pn.style.display='flex';
+    if(s&&s.total>0){pn.className='past-notice arch';pn.innerHTML=`<div class="pn-dot"></div><span>Arxiv: <strong style="color:#fff">${s.done}/${s.total}</strong> bajarilgan — <strong style="color:#4f8fff">${s.pct}%</strong></span>`;tSetPct(s.pct,s.done,s.total);tRenderPast(s);}
+    else{pn.className='past-notice';pn.innerHTML=`<div class="pn-dot"></div><span>Bu kun haqida ma'lumot saqlanmagan</span>`;tSetPct(0,0,0);document.getElementById('task-list').innerHTML='<div class="empty-state"><div class="ei">📭</div>Saqlangan ma\'lumot yo\'q</div>';document.getElementById('task-count').textContent='0 ta';}
+    return;
+  }
+  if(tIsFuture(d)){pn.style.display='flex';pn.className='past-notice';pn.innerHTML=`<div class="pn-dot"></div><span>Kelajak kun</span>`;const dt=tActiveTasks(d);tSetPct(0,0,dt.length);tRenderLive(d,dt,[]);return;}
+  pn.style.display='none';
+  const dt=tActiveTasks(d),ch=(tSnap[key]||{checkedIds:[]}).checkedIds;
+  const total=dt.length,done=dt.filter(t=>ch.includes(t.id)).length;
+  tSetPct(total?Math.round(done/total*100):0,done,total);tUpdateSnap(d);tRenderLive(d,dt,ch);
+}
+
+function tSetPct(pct,done,total){
+  const pe=document.getElementById('pct-label'),fe=document.getElementById('progress-fill');
+  pe.textContent=`${pct}%`;const cls=pct===100?'c100':pct>=60?'c60':pct>=30?'c30':'c0';
+  pe.className=`progress-pct ${total?cls:''}`;fe.className=`progress-fill ${total?cls:''}`;fe.style.width=`${pct}%`;
+  document.getElementById('progress-detail').textContent=`${done} / ${total} vazifa bajarildi`;
+  document.getElementById('task-count').textContent=`${total} ta`;
+}
+
+const tChkSVG=()=>`<svg width="12" height="10" viewBox="0 0 12 10" fill="none"><path d="M1 5L4.5 8.5L11 1" stroke="#080c14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+function tRenderLive(d,dt,ch){
+  const list=document.getElementById('task-list');
+  if(!dt.length){list.innerHTML=`<div class="empty-state"><div class="ei">✦</div><div>Vazifalar yo'q</div><div style="margin-top:6px;font-size:11px;color:#4a5a78;font-family:'JetBrains Mono',monospace;">＋ tugmasi orqali qo'shing</div></div>`;return;}
+  const sorted=[...dt].sort((a,b)=>ch.includes(a.id)-ch.includes(b.id));const fut=tIsFuture(d);
+  list.innerHTML=sorted.map(t=>{
+    const done=ch.includes(t.id);
+    const actions=fut?'':`<div class="task-actions"><button class="act-btn act-edit" onclick="tOpenEdit(${t.id});event.stopPropagation();">✎</button><button class="act-btn act-del" onclick="tAskDelete(${t.id});event.stopPropagation();">✕</button></div>`;
+    return `<div class="task-item ${done?'done':''}" data-id="${t.id}"><div class="task-check">${tChkSVG()}</div><div class="task-body"><div class="task-title">${t.name}</div>${t.note?`<div class="task-note">${t.note}</div>`:''}<div class="task-badges">${t.cat?`<span class="badge badge-cat">${t.cat}</span>`:''}${t.repeat!=='none'?`<span class="badge badge-repeat">${T_RLABELS[t.repeat]}</span>`:''}</div></div>${actions}</div>`;
+  }).join('');
+  list.querySelectorAll('.task-item').forEach(el=>{el.addEventListener('click',()=>{if(!fut)tToggle(parseInt(el.dataset.id));});});
+}
+
+function tRenderPast(s){
+  const list=document.getElementById('task-list');document.getElementById('task-count').textContent=`${s.total} ta`;
+  if(!s.taskIds||!s.taskIds.length){list.innerHTML='<div class="empty-state"><div class="ei">📭</div>Vazifalar topilmadi</div>';return;}
+  const sorted=[...s.taskIds].sort((a,b)=>s.checkedIds.includes(b)-s.checkedIds.includes(a));
+  list.innerHTML=sorted.map(id=>{const name=s.taskNames?.[id]||`Vazifa #${id}`;const done=s.checkedIds.includes(id);return `<div class="task-item ${done?'past-done':'past-undone'}"><div class="task-check">${tChkSVG()}</div><div class="task-body"><div class="task-title">${name}</div></div></div>`;}).join('');
+}
+
+function tToggle(id){
+  if(tIsFuture(tCurrentDate)||tIsPast(tCurrentDate))return;
+  const key=tdk(tCurrentDate);if(!tSnap[key])tSnap[key]={checkedIds:[]};
+  const arr=tSnap[key].checkedIds,i=arr.indexOf(id);if(i===-1)arr.push(id);else arr.splice(i,1);
+  tUpdateSnap(tCurrentDate);tRender();
+}
+
+function tOpenAdd(){
+  tEditId=null;document.getElementById('task-modal-title').textContent='Yangi vazifa';
+  ['t-name','t-note','t-cat'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('t-repeat').value='daily';
+  document.querySelectorAll('#tasks-app .repeat-opt').forEach(o=>o.classList.toggle('sel',o.dataset.r==='daily'));
+  tOpenModal('task-modal');setTimeout(()=>document.getElementById('t-name').focus(),300);
+}
+
+function tOpenEdit(id){
+  const t=tTasks.find(x=>x.id===id);if(!t)return;tEditId=id;
+  document.getElementById('task-modal-title').textContent='Vazifani tahrirlash';
+  document.getElementById('t-name').value=t.name;document.getElementById('t-note').value=t.note||'';
+  document.getElementById('t-cat').value=t.cat||'';document.getElementById('t-repeat').value=t.repeat;
+  document.querySelectorAll('#tasks-app .repeat-opt').forEach(o=>o.classList.toggle('sel',o.dataset.r===t.repeat));
+  tOpenModal('task-modal');
+}
+
+function tSaveTask(){
+  const name=document.getElementById('t-name').value.trim();if(!name){tToast('Vazifa nomini kiriting!','err');return;}
+  const data={name,note:document.getElementById('t-note').value.trim(),cat:document.getElementById('t-cat').value.trim(),repeat:document.getElementById('t-repeat').value};
+  if(tEditId){const i=tTasks.findIndex(t=>t.id===tEditId);if(i!==-1)tTasks[i]={...tTasks[i],...data};tToast('Vazifa tahrirlandi!');}
+  else{tTasks.push({id:Date.now(),...data,createdAt:tCurrentDate.toISOString()});tToast('Vazifa qo\'shildi! ✓');}
+  tSave();tCloseModal('task-modal');tRender();
+}
+
+function tAskDelete(id){
+  const t=tTasks.find(x=>x.id===id);if(!t)return;
+  tConfirm(`"${t.name}" — bugundan boshlab o'chiriladi. O'tgan kunlar tarixda saqlanib qoladi.`,()=>{
+    const i=tTasks.findIndex(x=>x.id===id);if(i===-1)return;
+    tTasks[i].deletedAt=tToday().toISOString();tSave();tRender();tToast('O\'chirildi (tarix saqlanib qoldi)');
+  });
+}
+
+function tChangeDay(d){tCurrentDate=new Date(tCurrentDate.getTime()+d*86400000);tRender();}
+
+function tOpenCal(){tCalVY=tCurrentDate.getFullYear();tCalVM=tCurrentDate.getMonth();tDrawCal();tOpenModal('cal-modal');}
+function tDrawCal(){
+  document.getElementById('cal-month-label').textContent=`${T_MONTHS[tCalVM]} ${tCalVY}`;
+  const g=document.getElementById('cal-grid');const dows=['Du','Se','Ch','Pa','Ju','Sh','Ya'];
+  let h=dows.map(x=>`<div class="cal-dow">${x}</div>`).join('');
+  const first=new Date(tCalVY,tCalVM,1),start=(first.getDay()+6)%7,dim=new Date(tCalVY,tCalVM+1,0).getDate(),td=tToday();
+  for(let i=0;i<start;i++)h+=`<div class="cal-day empty-day"></div>`;
+  for(let day=1;day<=dim;day++){const d=new Date(tCalVY,tCalVM,day);d.setHours(0,0,0,0);const key=tdk(d);const isSel=d.getTime()===tCurrentDate.getTime();const isT=d.getTime()===td.getTime();const hasData=tSnap[key]&&tSnap[key].total>0;h+=`<div class="cal-day ${isSel?'selected':isT?'today':''} ${hasData?'has-data':''}" data-date="${key}">${day}</div>`;}
+  g.innerHTML=h;
+  g.querySelectorAll('.cal-day[data-date]').forEach(el=>{el.addEventListener('click',()=>{const[y,m,d]=el.dataset.date.split('-').map(Number);tCurrentDate=new Date(y,m-1,d);tCloseModal('cal-modal');tRender();});});
+}
+
+function tRenderReport(){
+  const now=tToday();let days=[];
+  if(tCurRep==='week'){document.getElementById('report-sub').textContent='So\'nggi 7 kun';for(let i=6;i>=0;i--)days.push(new Date(now.getTime()-i*86400000));}
+  else{document.getElementById('report-sub').textContent=`${T_MONTHS[now.getMonth()]} ${now.getFullYear()}`;const first=new Date(now.getFullYear(),now.getMonth(),1);for(let d=new Date(first);d<=now;d=new Date(d.getTime()+86400000))days.push(new Date(d));}
+  const data=days.map(d=>{const key=tdk(d);if(tIsToday(d)){const dt=tActiveTasks(d),sc=tSnap[key]||{checkedIds:[]};const total=dt.length,done=dt.filter(t=>sc.checkedIds.includes(t.id)).length;return{d,key,total,done,pct:total?Math.round(done/total*100):0};}const s=tSnap[key];if(s&&s.total>0)return{d,key,total:s.total,done:s.done,pct:s.pct};return{d,key,total:0,done:0,pct:0};});
+  const active=data.filter(x=>x.total>0),avg=active.length?Math.round(active.reduce((s,x)=>s+x.pct,0)/active.length):0;
+  const perfect=data.filter(x=>x.pct===100).length,totalDone=data.reduce((s,x)=>s+x.done,0);
+  const avgCls=avg===100?'g':avg>=60?'':avg>=30?'y':'r';
+  let html=`<div class="rep-stats"><div class="rep-stat"><div class="rep-stat-val ${avgCls}">${avg}%</div><div class="rep-stat-label">O'rtacha</div></div><div class="rep-stat"><div class="rep-stat-val g">${perfect}</div><div class="rep-stat-label">100% kun</div></div><div class="rep-stat"><div class="rep-stat-val">${totalDone}</div><div class="rep-stat-label">Jami bajardi</div></div></div><div style="margin-bottom:4px;">`;
+  data.forEach(x=>{const isT=tIsToday(x.d);const label=tCurRep==='week'?T_DAYS[x.d.getDay()].slice(0,2):`${tp2(x.d.getDate())}.${tp2(x.d.getMonth()+1)}`;const bc=x.pct===100?'#22d07a':x.pct>=60?'#4f8fff':x.pct>=30?'#f5c542':'#ff5a6e';const pc=bc;html+=`<div class="rep-day-row" style="opacity:${x.total>0?1:0.35}"><div class="rep-day-date" style="${isT?'color:#4f8fff;font-weight:600':''}">${label}${isT?' ◉':''}</div><div class="rep-day-bar-wrap"><div class="rep-day-bar" style="width:${x.pct}%;background:${bc};"></div></div><div class="rep-day-pct" style="color:${pc}">${x.total?x.pct+'%':'—'}</div><div class="rep-day-detail">${x.total?x.done+'/'+x.total:'—'}</div></div>`;});
+  html+=`</div>`;
+  const tb=tTaskBreakdown(days);if(tb.length){html+=`<div class="rep-section-label">Vazifalar bo'yicha</div>`;tb.forEach(x=>{const rc=x.rate===100?'#22d07a':x.rate>=60?'#4f8fff':x.rate>=30?'#f5c542':'#ff5a6e';html+=`<div class="rep-task-row"><div><div class="rep-task-name">${x.name}</div><div class="rep-task-stats">${x.done}/${x.appeared} kun</div></div><div class="rep-task-rate" style="color:${rc}">${x.rate}%</div></div>`;});}
+  if(!active.length)html=`<div class="no-data">📊 Hali ma'lumot yo'q</div>`;
+  document.getElementById('rep-content').innerHTML=html;
+}
+
+function tTaskBreakdown(days){
+  const stats={};
+  days.forEach(d=>{const key=tdk(d);let tids,tnames,ch;if(tIsToday(d)){const dt=tActiveTasks(d);const sc=tSnap[key]||{checkedIds:[]};tids=dt.map(t=>t.id);tnames={};dt.forEach(t=>tnames[t.id]=t.name);ch=sc.checkedIds;}else{const s=tSnap[key];if(!s||!s.taskIds)return;tids=s.taskIds;tnames=s.taskNames||{};ch=s.checkedIds;}tids.forEach(id=>{const name=tnames[id]||`#${id}`;if(!stats[id])stats[id]={name,appeared:0,done:0};stats[id].appeared++;if(ch.includes(id))stats[id].done++;});});
+  return Object.values(stats).filter(x=>x.appeared>0).map(x=>({...x,rate:Math.round(x.done/x.appeared*100)})).sort((a,b)=>b.rate-a.rate);
+}
+
+function tSwitchPage(p){
+  tCurPage=p;
+  document.querySelectorAll('#tasks-app .page').forEach(x=>x.classList.remove('active'));
+  document.getElementById(`page-${p}`).classList.add('active');
+  document.querySelectorAll('#tasks-app .bnav-item').forEach(b=>b.classList.toggle('active',b.dataset.page===p));
+  document.getElementById('open-add').style.display=p==='today'?'flex':'none';
+  if(p==='report')tRenderReport();
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded',()=>{
+  // Telegram check
+  if(typeof Telegram!=='undefined'&&Telegram.WebApp){
+    const tg=Telegram.WebApp;tg.expand();
+    const u=tg.initDataUnsafe?.user;
+    if(u&&u.id!==1034121198){document.body.innerHTML=`<div style="display:flex;justify-content:center;align-items:center;height:100vh;flex-direction:column;padding:30px;text-align:center;background:#080c14;font-family:'Space Grotesk',sans-serif;"><div style="font-size:48px;margin-bottom:20px;">🔒</div><h2 style="color:#ff5a6e;margin-bottom:10px;">Ruxsat yo'q</h2><p style="color:#4a5a78;font-size:14px;">Ilova faqat <strong style="color:#4f8fff;">@Axrorbek_o6</strong> uchun</p></div>`;return;}
+  }
+
+  // URL param bilan boshlash
+  if(initApp==='tasks') switchApp('tasks');
+  else switchApp('finance');
+
+  // ── Finance events ──
+  document.querySelectorAll('#finance-app .tab').forEach(tab=>{
+    tab.addEventListener('click',()=>{
+      const id=tab.dataset.tab;
+      document.querySelectorAll('#finance-app .tab').forEach(t=>t.classList.remove('active'));
+      document.querySelectorAll('#finance-app .tab-content').forEach(tc=>tc.classList.remove('active'));
+      tab.classList.add('active');document.getElementById(`${id}-tab`).classList.add('active');
+      if(id==='history')loadExpenses();if(id==='manage')loadCategories();
     });
+  });
+  document.querySelectorAll('#finance-app .filter-btn').forEach(btn=>{btn.addEventListener('click',()=>{document.querySelectorAll('#finance-app .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');loadExpenses();});});
+  document.getElementById('category-filter').addEventListener('change',loadExpenses);
+  ['chiqim','kirim'].forEach(val=>{document.getElementById(`type-${val}`).addEventListener('click',()=>{document.querySelectorAll('#add-tab .type-option').forEach(o=>o.classList.remove('selected'));document.getElementById(`type-${val}`).classList.add('selected');document.getElementById('type').value=val;});});
+  ['chiqim','kirim'].forEach(val=>{document.getElementById(`edit-type-${val}`).addEventListener('click',()=>{document.querySelectorAll('#edit-modal .type-option').forEach(o=>o.classList.remove('selected'));document.getElementById(`edit-type-${val}`).classList.add('selected');document.getElementById('edit-type').value=val;});});
+  document.getElementById('add-transaction').addEventListener('click',addTransaction);
+  document.getElementById('go-history-btn').addEventListener('click',()=>{document.querySelectorAll('#finance-app .tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('#finance-app .tab-content').forEach(tc=>tc.classList.remove('active'));document.querySelector('#finance-app [data-tab="history"]').classList.add('active');document.getElementById('history-tab').classList.add('active');loadExpenses();});
+  document.getElementById('reset-chart').addEventListener('click',resetChart);
+  document.getElementById('reset-month').addEventListener('click',resetMonth);
+  document.getElementById('reset-all').addEventListener('click',resetAll);
+  document.getElementById('download-btn').addEventListener('click',downloadData);
+  document.getElementById('copy-data').addEventListener('click',copyData);
+  document.getElementById('close-edit-modal').addEventListener('click',()=>fCloseModal('edit-modal'));
+  document.getElementById('close-edit-category-modal').addEventListener('click',()=>fCloseModal('edit-category-modal'));
+  document.getElementById('save-edit').addEventListener('click',saveEdit);
+  document.getElementById('save-category-edit').addEventListener('click',saveCategoryEdit);
+  document.getElementById('add-category').addEventListener('click',addCategory);
+  document.getElementById('f-confirm-yes').addEventListener('click',()=>{fCloseModal('f-confirm-modal');if(_fConfirmCb){_fConfirmCb();_fConfirmCb=null;}});
+  document.getElementById('f-confirm-no').addEventListener('click',()=>{fCloseModal('f-confirm-modal');_fConfirmCb=null;});
+  ['edit-modal','edit-category-modal','f-confirm-modal'].forEach(id=>{document.getElementById(id).addEventListener('click',e=>{if(e.target===document.getElementById(id))fCloseModal(id);});});
 
-    function updateMonthBadge() {
-        const now = new Date();
-        document.getElementById('month-badge').textContent = `${MONTHS_UZ[now.getMonth()]} ${now.getFullYear()}`;
-    }
+  updateMonthBadge();updateCategorySelects();updateBalanceAndStats();
 
-    // ─── EVENT LISTENERS ──────────────────────────────────────────────────────
-    function setupEventListeners() {
-        // TABS
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                const id = tab.dataset.tab;
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
-                tab.classList.add('active');
-                document.getElementById(`${id}-tab`).classList.add('active');
-                if (id === 'history') loadExpenses();
-                if (id === 'manage') loadCategories();
-            });
-        });
+  // ── Tasks events ──
+  document.getElementById('prev-day').addEventListener('click',()=>tChangeDay(-1));
+  document.getElementById('next-day').addEventListener('click',()=>tChangeDay(1));
+  document.getElementById('open-calendar').addEventListener('click',tOpenCal);
+  document.getElementById('open-add').addEventListener('click',tOpenAdd);
+  document.getElementById('save-task').addEventListener('click',tSaveTask);
+  document.getElementById('t-name').addEventListener('keydown',e=>{if(e.key==='Enter')tSaveTask();});
+  document.getElementById('close-cal').addEventListener('click',()=>tCloseModal('cal-modal'));
+  document.getElementById('close-task').addEventListener('click',()=>tCloseModal('task-modal'));
+  document.getElementById('cal-prev').addEventListener('click',()=>{tCalVM--;if(tCalVM<0){tCalVM=11;tCalVY--;}tDrawCal();});
+  document.getElementById('cal-next').addEventListener('click',()=>{tCalVM++;if(tCalVM>11){tCalVM=0;tCalVY++;}tDrawCal();});
+  document.getElementById('t-confirm-yes').addEventListener('click',()=>{tCloseModal('t-confirm-modal');if(tConfCb){tConfCb();tConfCb=null;}});
+  document.getElementById('t-confirm-no').addEventListener('click',()=>{tCloseModal('t-confirm-modal');tConfCb=null;});
+  document.querySelectorAll('#tasks-app .repeat-opt').forEach(o=>{o.addEventListener('click',()=>{document.querySelectorAll('#tasks-app .repeat-opt').forEach(x=>x.classList.remove('sel'));o.classList.add('sel');document.getElementById('t-repeat').value=o.dataset.r;});});
+  ['cal-modal','task-modal','t-confirm-modal'].forEach(id=>{document.getElementById(id).addEventListener('click',e=>{if(e.target===document.getElementById(id))tCloseModal(id);});});
+  document.querySelectorAll('#tasks-app .bnav-item').forEach(b=>{b.addEventListener('click',()=>tSwitchPage(b.dataset.page));});
+  document.querySelectorAll('#tasks-app .rep-tab').forEach(t=>{t.addEventListener('click',()=>{document.querySelectorAll('#tasks-app .rep-tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');tCurRep=t.dataset.rep;tRenderReport();});});
 
-        // FILTERS
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                loadExpenses();
-            });
-        });
-
-        document.getElementById('category-filter').addEventListener('change', loadExpenses);
-
-        // TYPE TOGGLE (Add)
-        ['chiqim','kirim'].forEach(val => {
-            document.getElementById(`type-${val}`).addEventListener('click', () => {
-                document.querySelectorAll('#add-tab .type-option').forEach(o => o.classList.remove('selected'));
-                document.getElementById(`type-${val}`).classList.add('selected');
-                document.getElementById('type').value = val;
-            });
-        });
-
-        // TYPE TOGGLE (Edit)
-        ['chiqim','kirim'].forEach(val => {
-            document.getElementById(`edit-type-${val}`).addEventListener('click', () => {
-                document.querySelectorAll('#edit-modal .type-option').forEach(o => o.classList.remove('selected'));
-                document.getElementById(`edit-type-${val}`).classList.add('selected');
-                document.getElementById('edit-type').value = val;
-            });
-        });
-
-        // ADD TRANSACTION
-        document.getElementById('add-transaction').addEventListener('click', addTransaction);
-
-        // MANAGE
-        // Kunlik limit kartasini bosish -> tarix tabiga o'tish
-        document.getElementById('go-history-btn').addEventListener('click', () => {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
-            document.querySelector('[data-tab="history"]').classList.add('active');
-            document.getElementById('history-tab').classList.add('active');
-            loadExpenses();
-        });
-
-        document.getElementById('reset-chart').addEventListener('click', resetChart);
-        document.getElementById('reset-month').addEventListener('click', resetMonth);
-        document.getElementById('reset-all').addEventListener('click', resetAll);
-        document.getElementById('download-btn').addEventListener('click', downloadData);
-        document.getElementById('copy-data').addEventListener('click', copyData);
-
-        // MODALS
-        document.getElementById('close-edit-modal').addEventListener('click', () => closeModal('edit-modal'));
-        document.getElementById('close-edit-category-modal').addEventListener('click', () => closeModal('edit-category-modal'));
-        document.getElementById('save-edit').addEventListener('click', saveEdit);
-        document.getElementById('save-category-edit').addEventListener('click', saveCategoryEdit);
-        document.getElementById('add-category').addEventListener('click', addCategory);
-
-        // Confirm modal buttons
-        document.getElementById('confirm-yes').addEventListener('click', () => {
-            closeModal('confirm-modal');
-            if (_confirmCallback) { _confirmCallback(); _confirmCallback = null; }
-        });
-        document.getElementById('confirm-no').addEventListener('click', () => {
-            closeModal('confirm-modal');
-            _confirmCallback = null;
-        });
-
-        // Close modal on backdrop click
-        ['edit-modal','edit-category-modal','confirm-modal'].forEach(id => {
-            document.getElementById(id).addEventListener('click', e => {
-                if (e.target === document.getElementById(id)) closeModal(id);
-            });
-        });
-    }
-
-    // ─── MODAL HELPERS ────────────────────────────────────────────────────────
-    function openModal(id) { document.getElementById(id).classList.add('open'); }
-    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-
-    // ─── TOAST ────────────────────────────────────────────────────────────────
-    function showToast(msg, type = 'success') {
-        const toast = document.getElementById('toast');
-        toast.textContent = msg;
-        toast.className = `toast ${type} show`;
-        clearTimeout(toast._t);
-        toast._t = setTimeout(() => toast.classList.remove('show'), 3000);
-    }
-
-    // ─── CATEGORIES ──────────────────────────────────────────────────────────
-    function updateCategorySelects() {
-        const ids = ['category', 'edit-category', 'category-filter'];
-        ids.forEach(id => {
-            const el = document.getElementById(id);
-            if (!el) return;
-            const isFilter = id === 'category-filter';
-            el.innerHTML = isFilter ? '<option value="all">Barcha kategoriya</option>' : '';
-            categories.forEach(c => {
-                const opt = document.createElement('option');
-                opt.value = c.value;
-                opt.textContent = c.name;
-                el.appendChild(opt);
-            });
-        });
-        localStorage.setItem('categories', JSON.stringify(categories));
-    }
-
-    function loadCategories() {
-        const list = document.getElementById('categories-list');
-        if (!categories.length) {
-            list.innerHTML = '<div class="empty"><div class="empty-icon">🗂️</div>Kategoriyalar yo\'q</div>';
-            return;
-        }
-        list.innerHTML = categories.map(c => {
-            const used = transactions.some(t => t.category === c.value);
-            return `
-                <div class="cat-item">
-                    <span class="cat-name">${c.name}</span>
-                    <div class="cat-actions">
-                        <button class="action-btn edit-btn" onclick="editCategory(${c.id})">Tahrir</button>
-                        <button class="action-btn delete-btn" onclick="deleteCategory(${c.id})" ${used ? 'disabled style="opacity:0.35;cursor:not-allowed"' : ''}>O'chir</button>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }
-
-    function addCategory() {
-        const name = document.getElementById('new-category-name').value.trim();
-        if (!name) { showToast('Kategoriya nomini kiriting!', 'error'); return; }
-        if (categories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
-            showToast('Bu kategoriya allaqachon mavjud!', 'error'); return;
-        }
-        categories.push({ id: Date.now(), name, value: name.toLowerCase().replace(/\s+/g, '-') });
-        updateCategorySelects();
-        loadCategories();
-        document.getElementById('new-category-name').value = '';
-        showToast('Kategoriya qo\'shildi!');
-    }
-
-    function editCategory(id) {
-        const cat = categories.find(c => c.id === id);
-        if (!cat) return;
-        document.getElementById('edit-category-name').value = cat.name;
-        editingCategoryId = id;
-        openModal('edit-category-modal');
-    }
-
-    function deleteCategory(id) {
-        customConfirm('Bu kategoriyani o\'chirishni istaysizmi?', () => {
-            categories = categories.filter(c => c.id !== id);
-            updateCategorySelects();
-            loadCategories();
-            showToast('Kategoriya o\'chirildi!');
-        });
-    }
-
-    function saveCategoryEdit() {
-        const name = document.getElementById('edit-category-name').value.trim();
-        if (!name) { showToast('Nomni kiriting!', 'error'); return; }
-        if (categories.some(c => c.name.toLowerCase() === name.toLowerCase() && c.id !== editingCategoryId)) {
-            showToast('Bu nom allaqachon mavjud!', 'error'); return;
-        }
-        const idx = categories.findIndex(c => c.id === editingCategoryId);
-        if (idx === -1) return;
-        categories[idx].name = name;
-        categories[idx].value = name.toLowerCase().replace(/\s+/g, '-');
-        updateCategorySelects();
-        loadCategories();
-        closeModal('edit-category-modal');
-        showToast('Kategoriya tahrirlandi!');
-    }
-
-    // ─── TRANSACTIONS ─────────────────────────────────────────────────────────
-    function addTransaction() {
-        const amount = document.getElementById('amount').value;
-        const reason = document.getElementById('reason').value.trim();
-        const category = document.getElementById('category').value;
-        const type = document.getElementById('type').value;
-        if (!amount || !reason) { showToast('Summa va sababni kiriting!', 'error'); return; }
-
-        const tx = { id: Date.now(), amount, reason, category, type, date: new Date().toISOString() };
-        balance += type === 'kirim' ? parseInt(amount) : -parseInt(amount);
-        transactions.push(tx);
-        saveData();
-        updateBalanceAndStats();
-        showToast('Operatsiya qo\'shildi! ✓');
-        document.getElementById('amount').value = '';
-        document.getElementById('reason').value = '';
-    }
-
-    function editTransaction(id) {
-        const tx = transactions.find(t => t.id === id);
-        if (!tx) return;
-        document.getElementById('edit-amount').value = tx.amount;
-        document.getElementById('edit-reason').value = tx.reason;
-        document.getElementById('edit-category').value = tx.category;
-        document.getElementById('edit-type').value = tx.type;
-        // sync toggle
-        ['chiqim','kirim'].forEach(val => {
-            const el = document.getElementById(`edit-type-${val}`);
-            el.classList.toggle('selected', val === tx.type);
-        });
-        editingTransactionId = id;
-        openModal('edit-modal');
-    }
-
-    function deleteTransaction(id) {
-        customConfirm('Bu operatsiyani o\'chirishni istaysizmi?', () => {
-            const idx = transactions.findIndex(t => t.id === id);
-            if (idx === -1) return;
-            const tx = transactions[idx];
-            balance += tx.type === 'chiqim' ? parseInt(tx.amount) : -parseInt(tx.amount);
-            transactions.splice(idx, 1);
-            saveData();
-            updateBalanceAndStats();
-            loadExpenses();
-            showToast('Operatsiya o\'chirildi!');
-        });
-    }
-
-    function saveEdit() {
-        const amount = document.getElementById('edit-amount').value;
-        const reason = document.getElementById('edit-reason').value.trim();
-        const category = document.getElementById('edit-category').value;
-        const type = document.getElementById('edit-type').value;
-        if (!amount || !reason) { showToast('Barcha maydonlarni to\'ldiring!', 'error'); return; }
-
-        const idx = transactions.findIndex(t => t.id === editingTransactionId);
-        if (idx === -1) return;
-        const old = transactions[idx];
-        balance += old.type === 'chiqim' ? parseInt(old.amount) : -parseInt(old.amount);
-        balance += type === 'kirim' ? parseInt(amount) : -parseInt(amount);
-        transactions[idx] = { ...old, amount, reason, category, type };
-        saveData();
-        updateBalanceAndStats();
-        loadExpenses();
-        closeModal('edit-modal');
-        showToast('Operatsiya tahrirlandi!');
-    }
-
-    // ─── DISPLAY ──────────────────────────────────────────────────────────────
-    function loadExpenses() {
-        const list = document.getElementById('expenses-list');
-        const filter = document.querySelector('.filter-btn.active')?.dataset.filter || 'week';
-        const catFilter = document.getElementById('category-filter')?.value || 'all';
-
-        let txs = [...transactions].reverse().filter(t => {
-            const d = new Date(t.date);
-            return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-        });
-
-        if (filter === 'week') {
-            const ago = new Date(); ago.setDate(ago.getDate() - 7);
-            txs = txs.filter(t => new Date(t.date) >= ago);
-        }
-
-        if (catFilter !== 'all') txs = txs.filter(t => t.category === catFilter);
-
-        if (!txs.length) {
-            list.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>Operatsiyalar topilmadi</div>';
-            return;
-        }
-
-        list.innerHTML = txs.map(tx => {
-            const cat = categories.find(c => c.value === tx.category);
-            const catName = cat ? cat.name : tx.category;
-            const isIncome = tx.type === 'kirim';
-            const sign = isIncome ? '+' : '-';
-            const cls = isIncome ? 'income' : 'expense';
-            const icon = isIncome ? '⬆️' : '⬇️';
-            const date = new Date(tx.date).toLocaleDateString('uz-UZ');
-            return `
-                <div class="tx-item">
-                    <div class="tx-icon ${cls}">${icon}</div>
-                    <div class="tx-info">
-                        <div class="tx-title">${tx.reason}</div>
-                        <div class="tx-meta">
-                            <span class="tx-date">${date}</span>
-                            <span class="tx-cat">${catName}</span>
-                        </div>
-                    </div>
-                    <div class="tx-right">
-                        <div class="tx-amount ${cls}">${sign}${parseInt(tx.amount).toLocaleString()}</div>
-                        <div class="tx-actions">
-                            <button class="action-btn edit-btn" onclick="editTransaction(${tx.id})">✎</button>
-                            <button class="action-btn delete-btn" onclick="deleteTransaction(${tx.id})">✕</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }
-
-    // ─── STATS + CHART ────────────────────────────────────────────────────────
-    function updateBalanceAndStats() {
-        // Balance display
-        const absBalance = Math.abs(balance);
-        document.getElementById('current-balance').innerHTML =
-            `${absBalance.toLocaleString()} <span>so'm</span>`;
-
-        const indicator = document.getElementById('balance-indicator');
-        const status = document.getElementById('balance-status');
-        if (balance >= 0) {
-            indicator.style.color = 'var(--green)';
-            indicator.style.background = 'rgba(16,212,142,0.1)';
-            status.textContent = 'Musbat balans';
-        } else {
-            indicator.style.color = 'var(--red)';
-            indicator.style.background = 'rgba(255,77,109,0.1)';
-            status.textContent = 'Manfiy balans';
-        }
-
-        // Monthly stats
-        const monthTxs = transactions.filter(t => {
-            const d = new Date(t.date);
-            return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-        });
-
-        // Days remaining calculation (works locally, uses browser Date)
-        const now = new Date();
-        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0); // last day of month
-        const extraDays = 4;
-        const daysLeft = (lastDay.getDate() - now.getDate()) + extraDays;
-        const totalDays = daysLeft > 0 ? daysLeft : 1;
-
-        const daysToEnd = lastDay.getDate() - now.getDate(); // oyning oxirigacha
-        document.getElementById('days-left').textContent = daysLeft;
-        document.getElementById('days-detail').textContent =
-            `${daysToEnd} kun + 4 = ${daysLeft} kun`;
-
-        // Daily limit = balance / remaining days
-        const dailyLimit = balance > 0 ? Math.floor(balance / totalDays) : 0;
-        document.getElementById('daily-limit').textContent = dailyLimit.toLocaleString();
-
-        initChart(monthTxs);
-    }
-
-    function initChart(monthTxs) {
-        const ctx = document.getElementById('chart');
-        if (window.budgetChart) window.budgetChart.destroy();
-
-        const totals = {};
-        categories.forEach(c => { totals[c.value] = 0; });
-        monthTxs.filter(t => t.type === 'chiqim').forEach(t => {
-            if (totals.hasOwnProperty(t.category)) totals[t.category] += parseInt(t.amount);
-        });
-
-        const labels = [], data = [];
-        Object.entries(totals).forEach(([key, val]) => {
-            if (val > 0) {
-                const cat = categories.find(c => c.value === key);
-                if (cat) { labels.push(cat.name); data.push(val); }
-            }
-        });
-
-        const colors = ['#00d4ff','#7c3aed','#10d48e','#ff4d6d','#fbbf24','#f97316','#06b6d4','#8b5cf6'];
-
-        if (!labels.length) { labels.push("Ma'lumot yo'q"); data.push(1); }
-
-        window.budgetChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels,
-                datasets: [{
-                    data,
-                    backgroundColor: colors.slice(0, labels.length),
-                    borderWidth: 0,
-                    hoverOffset: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '68%',
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            color: '#94a3b8',
-                            font: { size: 11, family: 'Sora' },
-                            padding: 16,
-                            boxWidth: 10,
-                            boxHeight: 10,
-                            borderRadius: 3
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: '#1a2234',
-                        borderColor: 'rgba(255,255,255,0.08)',
-                        borderWidth: 1,
-                        titleColor: '#e2e8f0',
-                        bodyColor: '#94a3b8',
-                        padding: 12,
-                        callbacks: {
-                            label: ctx => ` ${ctx.label}: ${ctx.raw.toLocaleString()} so'm`
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    // ─── CUSTOM CONFIRM ───────────────────────────────────────────────────────
-    let _confirmCallback = null;
-
-    function customConfirm(message, onYes) {
-        document.getElementById('confirm-message').textContent = message;
-        _confirmCallback = onYes;
-        openModal('confirm-modal');
-    }
-
-    // ─── MANAGEMENT ───────────────────────────────────────────────────────────
-    function resetChart() {
-        customConfirm('Joriy oy ma\'lumotlarini tozalashni istaysizmi?', () => {
-            transactions = transactions.filter(t => {
-                const d = new Date(t.date);
-                return !(d.getMonth() === currentMonth && d.getFullYear() === currentYear);
-            });
-            balance = transactions.reduce((s, t) => t.type === 'kirim' ? s + parseInt(t.amount) : s - parseInt(t.amount), 0);
-            saveData();
-            updateBalanceAndStats();
-            showToast('Joriy oy tozalandi!');
-        });
-    }
-
-    function resetMonth() {
-        customConfirm('Yangi oy boshlashni istaysizmi?', () => {
-            const now = new Date();
-            currentMonth = now.getMonth();
-            currentYear = now.getFullYear();
-            updateMonthBadge();
-            saveData();
-            updateBalanceAndStats();
-            showToast('Yangi oy boshlandi!');
-        });
-    }
-
-    function resetAll() {
-        customConfirm('Barcha ma\'lumotlarni o\'chirishni istaysizmi? Bu amalni bekor qilib bo\'lmaydi.', () => {
-            transactions = []; balance = 0;
-            currentMonth = new Date().getMonth();
-            currentYear = new Date().getFullYear();
-            updateMonthBadge();
-            saveData();
-            updateBalanceAndStats();
-            loadExpenses();
-            showToast('Barcha ma\'lumotlar tozalandi!');
-        });
-    }
-
-    // ─── EXPORT ───────────────────────────────────────────────────────────────
-    function generateCSV() {
-        let csv = 'Sana,Sabab,Summa,Tur,Kategoriya\n';
-        [...transactions].sort((a,b) => new Date(b.date)-new Date(a.date)).forEach(t => {
-            const cat = categories.find(c => c.value === t.category);
-            csv += `"${new Date(t.date).toLocaleDateString('uz-UZ')}","${t.reason}","${t.amount}","${t.type === 'chiqim' ? 'Chiqim' : 'Kirim'}","${cat ? cat.name : t.category}"\n`;
-        });
-        return csv;
-    }
-
-    function generateTXT() {
-        let txt = `📊 Budjet Ma'lumotlari\n${'═'.repeat(38)}\n\n`;
-        txt += `💰 Balans: ${balance.toLocaleString()} so'm\n`;
-        txt += `📝 Operatsiyalar: ${transactions.length} ta\n\n`;
-        const income = transactions.filter(t=>t.type==='kirim').reduce((s,t)=>s+parseInt(t.amount),0);
-        const expense = transactions.filter(t=>t.type==='chiqim').reduce((s,t)=>s+parseInt(t.amount),0);
-        txt += `⬆️ Kirim: ${income.toLocaleString()} so'm\n⬇️ Chiqim: ${expense.toLocaleString()} so'm\n\n`;
-        [...transactions].sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach((t,i) => {
-            const cat = categories.find(c=>c.value===t.category);
-            txt += `${i+1}. ${new Date(t.date).toLocaleDateString('uz-UZ')} — ${t.reason}\n`;
-            txt += `   ${t.type==='chiqim'?'⬇️':'⬆️'} ${parseInt(t.amount).toLocaleString()} so'm (${cat?cat.name:t.category})\n\n`;
-        });
-        return txt;
-    }
-
-    function generateJSON() {
-        return JSON.stringify({ exportDate: new Date().toISOString(), balance, categories, transactions }, null, 2);
-    }
-
-    function downloadData() {
-        if (!transactions.length) { showToast('Yuklab olish uchun ma\'lumot yo\'q!', 'error'); return; }
-        const fmt = document.getElementById('file-format').value;
-        const map = {
-            csv: [generateCSV(), `budjet_${new Date().toISOString().slice(0,10)}.csv`, 'text/csv;charset=utf-8;'],
-            json: [generateJSON(), `budjet_${new Date().toISOString().slice(0,10)}.json`, 'application/json'],
-            txt: [generateTXT(), `budjet_${new Date().toISOString().slice(0,10)}.txt`, 'text/plain']
-        };
-        const [content, filename, mime] = map[fmt];
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(new Blob([content], { type: mime }));
-        link.download = filename;
-        link.click();
-        showToast(`${fmt.toUpperCase()} formatida yuklandi!`);
-    }
-
-    function copyData() {
-        if (!transactions.length) { showToast('Nusxalash uchun ma\'lumot yo\'q!', 'error'); return; }
-        const text = generateTXT();
-        navigator.clipboard?.writeText(text)
-            .then(() => showToast('Ma\'lumotlar nusxalandi! ✓'))
-            .catch(() => showToast('Nusxalash muvaffaqiyatsiz', 'error'));
-    }
-
-    // ─── PERSIST ──────────────────────────────────────────────────────────────
-    function saveData() {
-        localStorage.setItem('transactions', JSON.stringify(transactions));
-        localStorage.setItem('balance', balance);
-        localStorage.setItem('currentMonth', currentMonth);
-        localStorage.setItem('currentYear', currentYear);
-    }
+  tRender();
+});
 </script>
 </body>
 </html>
