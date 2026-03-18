@@ -719,9 +719,13 @@ function tRender(){
   }
 
   pn.style.display='none';
-  const dt=tActiveTasks(d),ch=(tSnap[key]||{checkedIds:[]}).checkedIds;
-  const total=dt.length,done=dt.filter(t=>ch.includes(t.id)).length;
-  tSetPct(total?Math.round(done/total*100):0,done,total);
+  const dt=tActiveTasks(d);
+  const ch=(tSnap[key]||{checkedIds:[]}).checkedIds;
+  const prog=(tSnap[key]||{}).taskProgress||{};
+  const total=dt.length;
+  const sumPct=dt.reduce((sum,t)=>ch.includes(t.id)?sum+(prog[t.id]!==undefined?prog[t.id]:100):sum,0);
+  const done=dt.filter(t=>ch.includes(t.id)&&(prog[t.id]===undefined||prog[t.id]===100)).length;
+  tSetPct(total?Math.round(sumPct/total):0,done,total);
   tUpdateSnap(d);
   tRenderLive(d,dt,ch);
 }
@@ -1228,7 +1232,12 @@ function tSwitchPage(p){
   document.querySelectorAll('#tasks-app .bnav-item').forEach(b=>b.classList.toggle('active',b.dataset.page===p));
   document.getElementById('open-add').style.display=p==='today'?'flex':'none';
   if(p==='report'){
-    tHistViewMonth=null; // tarix view reset
+    tHistViewMonth=null;
+    // Har doim haftalik tabdan boshla — tab va state sinxron bo'lsin
+    tCurRep='week';
+    document.querySelectorAll('#tasks-app .rep-tab').forEach(x=>x.classList.remove('active'));
+    document.querySelector('#tasks-app .rep-tab[data-rep="week"]').classList.add('active');
+    document.getElementById('rep-month-nav').style.display='none';
     tRenderReport();
   }
 }
